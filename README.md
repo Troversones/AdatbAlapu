@@ -1,0 +1,2 @@
+# AdatbAlapu
+Oracle ien: lyó
