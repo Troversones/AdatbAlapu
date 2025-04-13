@@ -1,2 +1,2 @@
-# AdatbAlapu
-Oracle ien: lyó
+# Videó megosztó platform
+Oracle adatbázis + PHP
