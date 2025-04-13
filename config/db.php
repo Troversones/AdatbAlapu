@@ -6,9 +6,7 @@ $tns = "
         (SID = orania2)
     )
 )";
-$db_username = "C##IFQA67";
-$db_password = "Kisdoomritahap45";
-$conn = oci_connect("C##IFQA67", "Kisdoomritahap45", $tns);
+$conn = oci_connect("C##IFQA67", "", $tns); // Ide saját felhasználói adatokat
 if (!$conn) {
   $e = oci_error();
   echo "<h2 style='color:red;'>Nem sikerült csatlakozni az Oracle adatbázishoz!</h2>";
