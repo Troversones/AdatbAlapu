@@ -12,11 +12,9 @@
                     <a class="nav-link text-white <?php echo ($_GET['page'] ?? 'home') === 'home' ? 'active fw-semibold' : ''; ?>" href="index.php?page=home">Főoldal</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white <?php echo ($_GET['page'] ?? '') === 'about' ? 'active fw-semibold' : ''; ?>" href="index.php?page=about">Rólunk</a>
+                    <a class="nav-link text-white <?php echo ($_GET['page'] ?? '') === 'profile' ? 'active fw-semibold' : ''; ?>" href="index.php?page=profile">Profil</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link text-white <?php echo ($_GET['page'] ?? '') === 'contact' ? 'active fw-semibold' : ''; ?>" href="index.php?page=contact">Kapcsolat</a>
-                </li>
+                <!--  és így tovább a többi oldallal  -->
             </ul>
         </div>
     </div>
