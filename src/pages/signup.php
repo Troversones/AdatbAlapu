@@ -2,39 +2,44 @@
 require_once __DIR__ . '/../config/db.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $felhasznalonev = $_POST['username'] ?? '';
-    $email = $_POST['email'] ?? '';
-    $szuletesi_datum = $_POST['birthdate'] ?? '';
-    $jelszo = $_POST['password'] ?? '';
+    $felhasznalonev = htmlspecialchars(trim($_POST['username'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
+    $szuletesi_datum = trim($_POST['birthdate'] ?? '');
+    $jelszo = trim($_POST['password'] ?? '');
 
-    if ($felhasznalonev && $email && $jelszo) {
-        $hashedPassword = password_hash($jelszo, PASSWORD_DEFAULT);
+    if ($felhasznalonev && $email && $jelszo && filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
-        $sql = "INSERT INTO FELHASZNALO (EMAIL, FELHASZNALONEV, JELSZO, SZULETESI_DATUM)
-                VALUES (:email, :felhasznalonev, :jelszo, TO_DATE(:szuletesi_datum, 'YYYY-MM-DD'))";
-
-        $stmt = oci_parse($conn, $sql);
-        oci_bind_by_name($stmt, ":email", $email);
-        oci_bind_by_name($stmt, ":felhasznalonev", $felhasznalonev);
-        oci_bind_by_name($stmt, ":jelszo", $hashedPassword);
-        oci_bind_by_name($stmt, ":szuletesi_datum", $szuletesi_datum);
-
-        $result = oci_execute($stmt);
-
-        if ($result) {
-            $message = "<div class='alert alert-success'>Sikeres regisztráció!</div>";
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $szuletesi_datum)) {
+            $message = "<div class='alert alert-warning'>Hibás születési dátum formátum. (Pl.: 2000-12-31)</div>";
         } else {
-            $e = oci_error($stmt);
-            if (strpos($e['message'], 'ORA-00001') !== false) {
-                $message = "<div class='alert alert-warning'>Ez az email cím már regisztrálva van.</div>";
-            } else {
-                $message = "<div class='alert alert-danger'>Hiba történt: " . $e['message'] . "</div>";
-            }
-        }
+            $hashedPassword = password_hash($jelszo, PASSWORD_DEFAULT);
 
-        oci_free_statement($stmt);
+            $sql = "INSERT INTO FELHASZNALO (EMAIL, FELHASZNALONEV, JELSZO, SZULETESI_DATUM)
+                    VALUES (:email, :felhasznalonev, :jelszo, TO_DATE(:szuletesi_datum, 'YYYY-MM-DD'))";
+
+            $stmt = oci_parse($conn, $sql);
+            oci_bind_by_name($stmt, ":email", $email);
+            oci_bind_by_name($stmt, ":felhasznalonev", $felhasznalonev);
+            oci_bind_by_name($stmt, ":jelszo", $hashedPassword);
+            oci_bind_by_name($stmt, ":szuletesi_datum", $szuletesi_datum);
+
+            $result = oci_execute($stmt);
+
+            if ($result) {
+                $message = "<div class='alert alert-success'>Sikeres regisztráció!</div>";
+            } else {
+                $e = oci_error($stmt);
+                if (strpos($e['message'], 'ORA-00001') !== false) {
+                    $message = "<div class='alert alert-warning'>Ez az email cím már regisztrálva van.</div>";
+                } else {
+                    $message = "<div class='alert alert-danger'>Hiba történt: " . htmlspecialchars($e['message']) . "</div>";
+                }
+            }
+
+            oci_free_statement($stmt);
+        }
     } else {
-        $message = "<div class='alert alert-warning'>Az email, felhasználónév és jelszó mezők kitöltése kötelező!</div>";
+        $message = "<div class='alert alert-warning'>Érvénytelen vagy hiányzó adatok! Kérlek, tölts ki minden kötelező mezőt helyesen.</div>";
     }
 }
 ?>
