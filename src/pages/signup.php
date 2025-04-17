@@ -63,7 +63,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <button type="submit" class="btn btn-primary w-100 py-2">Regisztráció</button>
         </form>
         <div class="text-center mt-3">
-            <small>Van már fiókod? <a href="login.php">Jelentkezz be</a></small>
+            <small>Van már fiókod? <a href="index.php?page=login">Jelentkezz be</a></small>
         </div>
     </div>
 </div>
