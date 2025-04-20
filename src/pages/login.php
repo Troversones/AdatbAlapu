@@ -20,7 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION['email'] = $email;
                 $_SESSION['username'] = $row['FELHASZNALONEV'];
 
-                header("Location: index.php?page=landing");
+                header("Location: index.php?page=home");
                 exit;
             } else {
                 $message = "<div class='alert alert-danger text-center'>Hibás jelszó.</div>";
