@@ -23,6 +23,9 @@
                 <li class="nav-item">
                     <a class="nav-link text-white <?php echo ($_GET['page'] ?? '') === 'leaderboard' ? 'active fw-semibold' : ''; ?>" href="index.php?page=leaderboard">Ranglista</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white <?php echo ($_GET['page'] ?? '') === 'my_videos' ? 'active fw-semibold' : ''; ?>" href="index.php?page=my_videos">Videóim</a>
+                </li>
 
                 <!--  és így tovább a többi oldallal  -->
             </ul>
