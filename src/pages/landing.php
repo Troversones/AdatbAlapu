@@ -19,7 +19,8 @@ session_start();
             <div class="d-flex justify-content-center gap-3">
                 <a href="index.php?page=signup" class="btn btn-success btn-lg">Regisztrálok</a>
                 <a href="index.php?page=login" class="btn btn-outline-light btn-lg bg-primary text-white">Bejelentkezés</a>
-                <a href="index.php?page=logout" class="btn btn-danger btn-lg">Kijelentkezés</a>
+              <!-- erre már nincs szükség mert a profilnál van kijelentkezés gomb
+                <a href="index.php?page=logout" class="btn btn-danger btn-lg">Kijelentkezés</a> -->
             </div> <br>
             <!--
             A gomb a bejelentkezés tesztelésre

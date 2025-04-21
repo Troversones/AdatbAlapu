@@ -1,4 +1,5 @@
-
+<?php
+?>
 <!-- a felhasználói adatoknál szerintem csak a felhasználónév legyen változtható-->
 
 <div class="container mt-5 mb-5">
