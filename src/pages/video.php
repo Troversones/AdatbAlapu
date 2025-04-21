@@ -155,6 +155,14 @@ $more_videos = [
                             </div>
                         </div>
                     <?php endforeach; ?>
+                    <form method="post" class="mb-4">
+                        <div class="mb-1 mt-3">
+                            <textarea class="form-control" id="new_comment" name="new_comment" rows="3" placeholder="Írd ide a hozzászólásod..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-chat-dots"></i> Hozzászólás küldése
+                        </button>
+                    </form>
                 </div>
             </div>
 
