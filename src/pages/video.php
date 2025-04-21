@@ -94,8 +94,8 @@ $more_videos = [
             </a>
         <?php endif; ?>
 
-        <div class="row">
-            <div class="col-lg-8">
+        <div class="row w-100 justify-content-center">
+            <div class="col-12">
                 <div class="ratio ratio-16x9 mb-4">
                     <video controls>
                         <source src="<?=$video['video_file'] ?>" type="video/mp4">
@@ -161,7 +161,7 @@ $more_videos = [
 
         </div>
 
-        <h4 class="mt-4">Feltöltő egyéb videói</h4>
+        <h4 class="mt-4 mb-2">Feltöltő egyéb videói</h4>
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-sm-4 g-4">
 
             <?php
