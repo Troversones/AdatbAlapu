@@ -26,7 +26,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $result = oci_execute($stmt);
 
             if ($result) {
-                $message = "<div class='alert alert-success'>Sikeres regisztráció!</div>";
+                $message = '<div class="alert alert-success d-flex justify-content-between align-items-center">
+                            <span>Sikeres regisztráció!</span>
+                            <a href="index.php?page=login" class="btn btn-sm btn-outline-dark">Bejelentkezés</a>
+                            </div>';
             } else {
                 $e = oci_error($stmt);
                 if (strpos($e['message'], 'ORA-00001') !== false) {

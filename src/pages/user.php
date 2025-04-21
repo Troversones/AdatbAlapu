@@ -21,6 +21,7 @@ $videos = array_filter($Videos, function($v) use ($username) {
 ?>
 
 <div class="container py-5">
+    <button onclick="history.back()" class="btn btn-outline-secondary mb-4">← Vissza</button>
     <?php if (!$username): ?>
         <div class="alert alert-danger">Felhasználó nem található.</div>
     <?php else: ?>
