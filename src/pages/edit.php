@@ -35,9 +35,9 @@ $video = $videoId && isset($videos[$videoId]) ? $videos[$videoId] : null;
 ?>
 
 <div class="container py-5">
+    <button onclick="history.back()" class="btn btn-outline-secondary mb-4">← Vissza</button>
     <?php if (!$video): ?>
         <div class="alert alert-danger">A megadott videó nem található.</div>
-        <button onclick="history.back()" class="btn btn-outline-secondary mb-4">← Vissza</button>
     <?php else: ?>
 
 
@@ -64,7 +64,6 @@ $video = $videoId && isset($videos[$videoId]) ? $videos[$videoId] : null;
             </div>
 
             <div class="d-flex justify-content-between flex-wrap gap-2">
-                <a href="index.php?page=video&id=<?= $videoId ?>" class="btn btn-outline-secondary">← Mégse</a>
                 <button type="submit" class="btn btn-success">
                     <i class="bi bi-save"></i> Mentés
                 </button>
