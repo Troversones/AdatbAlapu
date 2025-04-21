@@ -12,7 +12,7 @@
 </head>
 
 
-<body class="min-vh-100 d-flex flex-column">
+<body class="min-vh-100 d-flex flex-column bg-light">
 <div>
     <?php
     $page = $_GET['page'] ?? 'landing';
