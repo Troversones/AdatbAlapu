@@ -68,6 +68,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <label for="password" class="form-label">Jelszó</label>
                 <input type="password" class="form-control" id="password" name="password" placeholder="********">
             </div>
+            <!-- kétszer kell bekérni a jelszót a követelmények szerint -->
+            <div class="mb-4">
+                <label for="password2" class="form-label">Jelszó mégegyszer</label>
+                <input type="password" class="form-control" id="password2" name="password2" placeholder="********">
+            </div>
             <button type="submit" class="btn btn-primary w-100 py-2">Regisztráció</button>
         </form>
         <div class="text-center mt-3">
