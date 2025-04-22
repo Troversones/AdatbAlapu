@@ -1,6 +1,10 @@
 <?php
-require_once __DIR__ . '/../config/db.php';
 session_start();
+if (isset($_SESSION['email'])) {
+    header("Location: index.php?page=home");
+    exit;
+}
+require_once __DIR__ . '/../config/db.php';
 $message = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {

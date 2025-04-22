@@ -1,4 +1,9 @@
 <?php
+session_start();
+if (!isset($_SESSION['email'])) {
+    header("Location: index.php?page=login");
+    exit;
+}
 ?>
 <!-- a felhasználói adatoknál szerintem csak a felhasználónév legyen változtható-->
 

@@ -1,3 +1,10 @@
+<?php
+session_start();
+if (!isset($_SESSION['email'])) {
+    header("Location: index.php?page=login");
+    exit;
+}
+?>
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
 

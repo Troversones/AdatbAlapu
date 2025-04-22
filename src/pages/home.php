@@ -1,6 +1,10 @@
 <?php
-require_once __DIR__ . '/../config/db.php';
 session_start();
+if (!isset($_SESSION['email'])) {
+    header("Location: index.php?page=login");
+    exit;
+}
+require_once __DIR__ . '/../config/db.php';
 include 'src/includes/functions.php';
 $videos = getRecentVideos($conn, 20);
 //echo '<pre>'; print_r($videos); echo '</pre>'; asszociatív tömb teszt
@@ -8,10 +12,8 @@ $videos = getRecentVideos($conn, 20);
 <form method="get" class="mt-1 px-3">
     <input type="hidden" name="page" value="home">
 
-    <div class="row g-2">
-        <div class="col-md-4">
-            <input type="text" name="search" class="form-control" placeholder="Keresés...">
-        </div>
+    <div class="row g-2 justify-content-center">
+
 
         <div class="col-md-3">
             <select name="category" class="form-select">

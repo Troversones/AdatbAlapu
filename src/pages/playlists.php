@@ -1,4 +1,11 @@
 <?php
+session_start();
+if (!isset($_SESSION['email'])) {
+    header("Location: index.php?page=login");
+    exit;
+}
+
+
 $playlists = [
     ['id' => 1, 'name' => 'Frontend tanfolyam', 'count' => 12],
     ['id' => 2, 'name' => 'Kedvenc vlogok', 'count' => 5],

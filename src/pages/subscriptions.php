@@ -1,5 +1,9 @@
 <?php
 session_start();
+if (!isset($_SESSION['email'])) {
+    header("Location: index.php?page=login");
+    exit;
+}
 
 // Dummy feliratkozott felhasználók listája
 $subscriptions = ['frontend_mester', 'php_guru', 'travel_vlogger'];
