@@ -13,17 +13,17 @@ $username = $_SESSION['username'];
     <form method="post" enctype="multipart/form-data">
         <div class="mb-3">
             <label for="video_file" class="form-label">Videófájl</label>
-            <input class="form-control" type="file" id="video_file" name="video_file" accept="video/mp4,video/*" required>
+            <input class="form-control" type="file" id="video_file" name="video_file" accept="video/mp4,video/*" >
         </div>
 
         <div class="mb-3">
             <label for="title" class="form-label">Cím</label>
-            <input type="text" class="form-control" id="title" name="title" maxlength="255" required>
+            <input type="text" class="form-control" id="title" name="title" maxlength="255" >
         </div>
 
         <div class="mb-3">
             <label for="description" class="form-label">Leírás</label>
-            <textarea class="form-control" id="description" name="description" rows="4" maxlength="1000" required></textarea>
+            <textarea class="form-control" id="description" name="description" rows="4" maxlength="1000" ></textarea>
         </div>
 
         <div class="mb-3">

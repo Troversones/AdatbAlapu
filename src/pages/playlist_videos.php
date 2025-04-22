@@ -10,7 +10,17 @@ if (!isset($_SESSION['email'])) {
 
 
 <div class="container py-4">
-    <a href="index.php?page=playlists" class="btn btn-outline-secondary mb-4">← Vissza</a>
+    <form method="post" class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4 w-75">
+        <div class="d-flex align-items-center gap-2 flex-grow-1">
+            <a href="index.php?page=playlists" class="btn btn-outline-secondary ">
+                ← Vissza
+            </a>
+            <input type="text" name="name" class="form-control w-25" value="peldanev" placeholder="Lejátszási lista neve">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Mentés
+            </button>
+        </div>
+    </form>
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-sm-4 g-4">
         <?php
 
