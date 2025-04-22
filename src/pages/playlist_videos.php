@@ -12,12 +12,18 @@ if (!isset($_SESSION['email'])) {
 <div class="container py-4">
     <form method="post" class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4 w-75">
         <div class="d-flex align-items-center gap-2 flex-grow-1">
-            <a href="index.php?page=playlists" class="btn btn-outline-secondary ">
+            <a href="index.php?page=playlists" class="btn btn-outline-secondary">
                 ← Vissza
             </a>
+
             <input type="text" name="name" class="form-control w-25" value="peldanev" placeholder="Lejátszási lista neve">
-            <button type="submit" class="btn btn-primary">
+
+            <button type="submit" name="save" class="btn btn-primary">
                 <i class="bi bi-save"></i> Mentés
+            </button>
+
+            <button type="submit" name="delete" class="btn btn-danger" onclick="return confirm('Biztosan törlöd a lejátszási listát?');">
+                <i class="bi bi-trash"></i> Törlés
             </button>
         </div>
     </form>

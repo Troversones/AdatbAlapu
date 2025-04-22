@@ -68,8 +68,11 @@ $video = $videoId && isset($videos[$videoId]) ? $videos[$videoId] : null;
             </div>
 
             <div class="d-flex justify-content-between flex-wrap gap-2">
-                <button type="submit" class="btn btn-success">
+                <button type="submit" name="save" class="btn btn-success">
                     <i class="bi bi-save"></i> Mentés
+                </button>
+                <button type="submit" name="delete" class="btn btn-danger" onclick="return confirm('Biztosan törlöd ezt a videót?');">
+                    <i class="bi bi-trash"></i> Videó törlése
                 </button>
             </div>
         </form>

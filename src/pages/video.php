@@ -81,6 +81,9 @@ $more_videos = [
     ['title' => 'Utazás Rómába', 'uploader' => 'travel_vlogger'],
     ['title' => 'Vlog: Reggeli rutin', 'uploader' => 'travel_vlogger']
 ];
+
+
+$playlists = ['Tananyagok', 'Frontend kedvencek', 'Később megnézendő'];
 ?>
 
 <div class="container py-5">
@@ -146,6 +149,23 @@ $more_videos = [
                         </button>
                     </div>
                 </div>
+                <form method="post" class="mb-4 mt-3 w-50">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-sm-8 col-md-6">
+                            <select class="form-select" id="playlist_select" name="playlist_name" >
+                                <option value="" disabled selected>Válassz listát...</option>
+                                <?php foreach ($playlists as $list): ?>
+                                    <option value="<?= htmlspecialchars($list) ?>"><?= htmlspecialchars($list) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-outline-primary mt-3 mt-sm-0">
+                                <i class="bi bi-plus-circle"></i> Hozzáadás
+                            </button>
+                        </div>
+                    </div>
+                </form>
 
                 <h5 class="mt-5 mb-3">Hozzászólások</h5>
                 <div class="list-group">

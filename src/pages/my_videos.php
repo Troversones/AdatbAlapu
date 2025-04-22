@@ -16,9 +16,9 @@ if (!isset($_SESSION['email'])) {
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-sm-4 g-4">
         <?php
         $videos = [
-            ['id' => 3, 'title' => 'Oracle lekérdezések'],
-            ['id' => 4, 'title' => 'Bootstrap kártyák'],
-            ['id' => 5, 'title' => 'Adatbázis normalizálás'],
+            ['ID' => 3, 'TITLE' => 'Oracle lekérdezések'],
+            ['ID' => 4, 'TITLE' => 'Bootstrap kártyák'],
+            ['ID' => 5, 'TITLE' => 'Adatbázis normalizálás'],
         ];
 
         foreach ($videos as $video):
