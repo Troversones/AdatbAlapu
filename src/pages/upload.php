@@ -5,7 +5,56 @@ if (!isset($_SESSION['email'])) {
     exit;
 }
 $username = $_SESSION['username'];
+
+
+
+require_once 'src/config/db.php';
+
+
+$email = $_SESSION['email'];
+$username = $_SESSION['username'];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['video_file'])) {
+    $title = $_POST['title'] ?? '';
+    $description = $_POST['description'] ?? '';
+    $videoTmpPath = $_FILES['video_file']['tmp_name'] ?? '';
+
+    if (empty($title) || empty($description) || empty($videoTmpPath)) {
+        echo "<div class='alert alert-danger'>Minden mező kitöltése kötelező!</div>";
+    } else {
+        $videoBlob = file_get_contents($videoTmpPath);
+
+        $sql = "INSERT INTO VIDEO (FELHASZNALO_EMAIL, CIM, LEIRAS, VIDEO_FILE)
+        VALUES (:email, :title, :description, EMPTY_BLOB())
+        RETURNING VIDEO_FILE, VIDEO_ID INTO :blob, :id";
+
+        $stmt = oci_parse($conn, $sql);
+
+        $lob = oci_new_descriptor($conn, OCI_D_LOB);
+        $videoId = null;
+
+        oci_bind_by_name($stmt, ":email", $email);
+        oci_bind_by_name($stmt, ":title", $title);
+        oci_bind_by_name($stmt, ":description", $description);
+        oci_bind_by_name($stmt, ":blob", $lob, -1, OCI_B_BLOB);
+        oci_bind_by_name($stmt, ":id", $videoId, -1, SQLT_INT);
+
+        $videoBlob = file_get_contents($videoTmpPath);
+
+        if (oci_execute($stmt, OCI_NO_AUTO_COMMIT) && $lob->save($videoBlob)) {
+            oci_commit($conn);
+            oci_free_statement($stmt);
+            $lob->free();
+            echo "<div class='alert alert-success mt-3'>Sikeres feltöltés! (ID: $videoId)</div>";
+        } else {
+            oci_rollback($conn);
+            echo "<div class='alert alert-danger mt-3'>Hiba történt a mentéskor.</div>";
+        }
+
+    }
+}
 ?>
+
 
 <div class="container py-5">
     <button onclick="history.back()" class="btn btn-outline-secondary mb-4">← Vissza</button>
