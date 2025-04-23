@@ -1,4 +1,5 @@
 <?php
+include "resources.php";
 $tns = "
 (DESCRIPTION =
     (ADDRESS = (PROTOCOL = TCP)(HOST = localhost)(PORT = 1521))
@@ -6,7 +7,7 @@ $tns = "
         (SID = orania2)
     )
 )";
-$conn = oci_connect("C##IFQA67", "", $tns); // Ide saját felhasználói adatokat
+$conn = oci_connect($username, $password, $tns); // egy gitignorált resources.php-be átraktam a $username és $password-öt
 if (!$conn) {
   $e = oci_error();
   echo "<h2 style='color:red;'>Nem sikerült csatlakozni az Oracle adatbázishoz!</h2>";
