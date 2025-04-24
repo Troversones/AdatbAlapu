@@ -17,4 +17,25 @@ function getRecentVideos($conn, $limit = 20) {
 
     return $videos;
 }
+
+function getUserVideos($conn, $email) {
+    $videos = [];
+
+    $sql = "SELECT VIDEO_ID AS id, CIM AS title 
+            FROM VIDEO 
+            WHERE FELHASZNALO_EMAIL = :email 
+            ORDER BY DATUM DESC";
+    $stmt = oci_parse($conn, $sql);
+
+    oci_bind_by_name($stmt, ':email', $email);
+    oci_execute($stmt);
+
+    while ($row = oci_fetch_assoc($stmt)) {
+        $videos[] = $row;
+    }
+
+    oci_free_statement($stmt);
+
+    return $videos;
+}
 ?>
