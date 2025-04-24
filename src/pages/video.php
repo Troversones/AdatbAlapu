@@ -24,6 +24,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reaction'])) {
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_subscribe'])) {
+    toggleSubscription($conn, $_SESSION['email'], $video['uploader']);
+    header("Location: index.php?page=video&id=" . urlencode($videoId));
+    exit;
+}
+
 
 
 $reactions = getVideoReactions($conn, $videoId);
@@ -72,9 +78,9 @@ $playlists = ['Tananyagok', 'Frontend kedvencek', 'Később megnézendő'];
             </a>
         <?php endif; ?>
 
-        <div class="row w-100 justify-content-center">
-            <div class="col-12">
-                <div class="ratio ratio-16x9 mb-4">
+        <div class="row  justify-content-center">
+            <div class="col-12 w-100">
+                <div class="ratio w-100 ratio-16x9 mb-4">
                     <video controls>
                         <source src="src/services/video_stream.php?id=<?= $video['id'] ?>" type="video/mp4">
                         A videó nem lejátszható.
@@ -114,16 +120,21 @@ $playlists = ['Tananyagok', 'Frontend kedvencek', 'Később megnézendő'];
                                 <div class="fw-semibold">
                                     <a href="<?= ($_SESSION['email'] === $video['uploader'])
                                         ? 'index.php?page=my_videos'
-                                        : 'index.php?page=user&username=' . urlencode($video['uploader']) ?>"
+                                        : 'index.php?page=user&email=' . urlencode($video['uploader']) ?>"
                                        class="text-decoration-none text-dark">
                                         <?= htmlspecialchars($video['uploader']) ?>
                                     </a>
                                 </div>
                             </div>
                         </div>
-                        <button class="btn btn-outline-primary w-100 mt-2">
-                            <i class="bi bi-bell-fill"></i> Feliratkozás
-                        </button>
+                        <?php if ($_SESSION['email'] !== $video['uploader']): ?>
+                        <form method="post">
+                            <button type="submit" name="toggle_subscribe" class="btn <?= isSubscribed($conn, $_SESSION['email'], $video['uploader']) ? 'btn-outline-danger' : 'btn-outline-primary' ?>  w-100 mt-2">
+                                <i class="bi bi-bell-fill"></i>
+                                <?= isSubscribed($conn, $_SESSION['email'], $video['uploader']) ? 'Leiratkozás' : 'Feliratkozás' ?>
+                            </button>
+                        </form>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <form method="post" class="mb-4 mt-3 w-50">

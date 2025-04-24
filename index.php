@@ -33,7 +33,7 @@
     if (file_exists($file)) {
         include $file;
     } else {
-        echo "<p>Az oldal nem található.</p>";
+        echo "<p class='mt-5 w-100 text-center fs-5'>Az oldal nem található.</p>";
     }
     ?>
 </div>

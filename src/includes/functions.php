@@ -193,4 +193,55 @@ function incrementViewCount($conn, $videoId) {
     oci_execute($stmt);
     oci_free_statement($stmt);
 }
+
+function isSubscribed($conn, $subscriberEmail, $creatorEmail) {
+    $stmt = oci_parse($conn, "SELECT COUNT(*) AS CNT FROM FELIRATKOZAS WHERE FELHASZNALO_EMAIL = :subscriber AND FELIRATKOZOTT_EMAIL = :creator");
+    oci_bind_by_name($stmt, ":subscriber", $subscriberEmail);
+    oci_bind_by_name($stmt, ":creator", $creatorEmail);
+    oci_execute($stmt);
+    $row = oci_fetch_assoc($stmt);
+    oci_free_statement($stmt);
+    return $row['CNT'] > 0;
+}
+
+function toggleSubscription($conn, $subscriberEmail, $creatorEmail) {
+    if (isSubscribed($conn, $subscriberEmail, $creatorEmail)) {
+        $stmt = oci_parse($conn, "DELETE FROM FELIRATKOZAS WHERE FELHASZNALO_EMAIL = :subscriber AND FELIRATKOZOTT_EMAIL = :creator");
+    } else {
+        $stmt = oci_parse($conn, "INSERT INTO FELIRATKOZAS (FELHASZNALO_EMAIL, FELIRATKOZOTT_EMAIL) VALUES (:subscriber, :creator)");
+    }
+    oci_bind_by_name($stmt, ":subscriber", $subscriberEmail);
+    oci_bind_by_name($stmt, ":creator", $creatorEmail);
+    oci_execute($stmt);
+    oci_free_statement($stmt);
+}
+
+function getSubscriptions($conn, $email) {
+    $subscriptions = [];
+    $sql = "SELECT f.FELIRATKOZOTT_EMAIL, u.FELHASZNALONEV 
+            FROM FELIRATKOZAS f 
+            JOIN FELHASZNALO u ON f.FELIRATKOZOTT_EMAIL = u.EMAIL 
+            WHERE f.FELHASZNALO_EMAIL = :email";
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":email", $email);
+    oci_execute($stmt);
+
+    while ($row = oci_fetch_assoc($stmt)) {
+        $subscriptions[] = [
+            'email' => $row['FELIRATKOZOTT_EMAIL'],
+            'username' => $row['FELHASZNALONEV']
+        ];
+    }
+
+    oci_free_statement($stmt);
+    return $subscriptions;
+}
+
+function unsubscribe($conn, $subscriberEmail, $creatorEmail) {
+    $stmt = oci_parse($conn, "DELETE FROM FELIRATKOZAS WHERE FELHASZNALO_EMAIL = :subscriber AND FELIRATKOZOTT_EMAIL = :creator");
+    oci_bind_by_name($stmt, ":subscriber", $subscriberEmail);
+    oci_bind_by_name($stmt, ":creator", $creatorEmail);
+    oci_execute($stmt);
+    oci_free_statement($stmt);
+}
 ?>
