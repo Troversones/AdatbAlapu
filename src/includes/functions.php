@@ -38,4 +38,42 @@ function getUserVideos($conn, $email) {
 
     return $videos;
 }
+
+function getVideoById($conn, $id) {
+    $video = null;
+
+    $sql = "SELECT v.VIDEO_ID, v.CIM, v.LEIRAS, v.DATUM, v.NEZETTSEG, v.FELHASZNALO_EMAIL 
+            FROM VIDEO v
+            WHERE v.VIDEO_ID = :id";
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":id", $id);
+    oci_execute($stmt);
+
+    if ($row = oci_fetch_assoc($stmt)) {
+        $video = [
+            'id' => $row['VIDEO_ID'],
+            'title' => $row['CIM'],
+            'description' => $row['LEIRAS'],
+            'upload_date' => date('Y-m-d', strtotime($row['DATUM'])),
+            'views' => $row['NEZETTSEG'],
+            'uploader' => $row['FELHASZNALO_EMAIL'],
+            'tags' => [],
+        ];
+    }
+    oci_free_statement($stmt);
+
+    if ($video) {
+        $tagSql = "SELECT KATEGORIA_NEV FROM VIDEO_KATEGORIA WHERE VIDEO_ID = :id";
+        $tagStmt = oci_parse($conn, $tagSql);
+        oci_bind_by_name($tagStmt, ":id", $id);
+        oci_execute($tagStmt);
+
+        while ($tagRow = oci_fetch_assoc($tagStmt)) {
+            $video['tags'][] = $tagRow['KATEGORIA_NEV'];
+        }
+        oci_free_statement($tagStmt);
+    }
+
+    return $video;
+}
 ?>

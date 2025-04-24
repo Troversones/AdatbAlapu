@@ -5,58 +5,11 @@ if (!isset($_SESSION['email'])) {
     exit;
 }
 $videoId = $_GET['id'] ?? null;
-
-$videos = [
-    1 => [
-        'title' => 'Frontend alapok',
-        'description' => 'Ebben a videóban megismerkedünk a HTML, CSS és Bootstrap alapjaival.',
-        'upload_date' => '2024-04-20',
-        'views' => 1234,
-        'uploader' => 'frontend_mester',
-        'video_file' => 'public/videos/sample1.mp4',
-        'tags' => ['frontend', 'html', 'css', 'bootstrap']
-    ],
-    2 => [
-        'title' => 'PHP bevezető',
-        'description' => 'Ismerd meg a PHP nyelv alapjait kezdőknek!',
-        'upload_date' => '2024-04-15',
-        'views' => 982,
-        'uploader' => 'php_guru',
-        'video_file' => 'public/videos/sample2.mp4',
-        'tags' => ['php', 'backend', 'alapok']
-    ],
-    3 => [
-        'title' => 'Oracle lekérdezések',
-        'description' => 'Alap SQL lekérdezések Oracle-ben, beleértve SELECT, WHERE, JOIN műveleteket.',
-        'upload_date' => '2024-04-10',
-        'views' => 723,
-        'uploader' => 'test',
-        'video_file' => 'public/videos/oracle_queries.mp4',
-        'tags' => ['sql', 'oracle', 'adatbázis']
-    ],
-    4 => [
-        'title' => 'Bootstrap kártyák',
-        'description' => 'Ebben a videóban megmutatjuk, hogyan lehet stílusos Bootstrap kártyákat készíteni frontend fejlesztéshez.',
-        'upload_date' => '2024-04-12',
-        'views' => 564,
-        'uploader' => 'test',
-        'video_file' => 'public/videos/bootstrap_cards.mp4',
-         'tags' => ['sql', 'oracle', 'adatbázis']
-    ],
-    5 => [
-        'title' => 'Adatbázis normalizálás',
-        'description' => 'Ebben az oktatóanyagban megtanulhatod, hogyan normalizáld az adatbázisod 1NF-től 3NF-ig.',
-        'upload_date' => '2024-04-18',
-        'views' => 812,
-        'uploader' => 'test',
-        'video_file' => 'public/videos/db_normalization.mp4',
-         'tags' => ['sql', 'oracle', 'adatbázis']
-    ]
+require_once 'src/config/db.php';
+include 'src/includes/functions.php';
 
 
-];
-
-$video = $videoId && isset($videos[$videoId]) ? $videos[$videoId] : null;
+$video = $videoId ? getVideoById($conn, $videoId) : null;
 
 $comments = [
     [
@@ -95,7 +48,7 @@ $playlists = ['Tananyagok', 'Frontend kedvencek', 'Később megnézendő'];
 
 
 
-        <?php if (isset($_SESSION['username']) && $_SESSION['username'] === $video['uploader']): ?>
+        <?php if (isset($_SESSION['email']) && $_SESSION['email'] === $video['uploader']): ?>
             <a href="index.php?page=edit&id=<?= $videoId ?>" class="btn btn-outline-secondary w-100 mb-4">
                 <i class="bi bi-pencil-square"></i> Szerkesztés
             </a>
@@ -105,8 +58,8 @@ $playlists = ['Tananyagok', 'Frontend kedvencek', 'Később megnézendő'];
             <div class="col-12">
                 <div class="ratio ratio-16x9 mb-4">
                     <video controls>
-                        <source src="<?=$video['video_file'] ?>" type="video/mp4">
-                        A videó nem lejátszható a böngészőben.
+                        <source src="src/services/video_stream.php?id=<?= $video['id'] ?>" type="video/mp4">
+                        A videó nem lejátszható.
                     </video>
                 </div>
 
