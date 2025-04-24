@@ -76,4 +76,66 @@ function getVideoById($conn, $id) {
 
     return $video;
 }
+
+
+
+function getVideoDetailsForEdit($conn, $videoId, $email) {
+    $sql = "SELECT VIDEO_ID, CIM, LEIRAS, FELHASZNALO_EMAIL FROM VIDEO WHERE VIDEO_ID = :id";
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":id", $videoId);
+    oci_execute($stmt);
+    $video = oci_fetch_assoc($stmt);
+    oci_free_statement($stmt);
+
+    if (!$video || $video['FELHASZNALO_EMAIL'] !== $email) {
+        return null;
+    }
+
+    // Csatolt tagek
+    $stmt = oci_parse($conn, "SELECT KATEGORIA_NEV FROM VIDEO_KATEGORIA WHERE VIDEO_ID = :id");
+    oci_bind_by_name($stmt, ":id", $videoId);
+    oci_execute($stmt);
+    $tags = [];
+    while ($row = oci_fetch_assoc($stmt)) {
+        $tags[] = $row['KATEGORIA_NEV'];
+    }
+    oci_free_statement($stmt);
+
+    $video['TAGS'] = $tags;
+    return $video;
+}
+
+function updateVideo($conn, $videoId, $title, $description, $tags) {
+    $sql = "UPDATE VIDEO SET CIM = :title, LEIRAS = :description WHERE VIDEO_ID = :id";
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":title", $title);
+    oci_bind_by_name($stmt, ":description", $description);
+    oci_bind_by_name($stmt, ":id", $videoId);
+    oci_execute($stmt);
+    oci_free_statement($stmt);
+
+    // Új kategóriák
+    $stmt = oci_parse($conn, "DELETE FROM VIDEO_KATEGORIA WHERE VIDEO_ID = :id");
+    oci_bind_by_name($stmt, ":id", $videoId);
+    oci_execute($stmt);
+    oci_free_statement($stmt);
+
+    $tagList = array_filter(array_map('trim', explode(',', $tags)));
+    foreach ($tagList as $tag) {
+        $stmt = oci_parse($conn, "INSERT INTO VIDEO_KATEGORIA (VIDEO_ID, KATEGORIA_NEV) VALUES (:id, :tag)");
+        oci_bind_by_name($stmt, ":id", $videoId);
+        oci_bind_by_name($stmt, ":tag", $tag);
+        oci_execute($stmt);
+        oci_free_statement($stmt);
+    }
+
+    return true;
+}
+
+function deleteVideo($conn, $videoId) {
+    $stmt = oci_parse($conn, "DELETE FROM VIDEO WHERE VIDEO_ID = :id");
+    oci_bind_by_name($stmt, ":id", $videoId);
+    oci_execute($stmt);
+    oci_free_statement($stmt);
+}
 ?>

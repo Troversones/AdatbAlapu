@@ -5,78 +5,77 @@ if (!isset($_SESSION['email'])) {
     exit;
 }
 
+require_once 'src/config/db.php';
+include 'src/includes/functions.php';
+
 $videoId = $_GET['id'] ?? null;
 
-$videos = [
-    1 => [
-        'title' => 'Frontend alapok',
-        'description' => 'Ebben a videóban megismerkedünk a HTML, CSS és Bootstrap alapjaival.',
-        'upload_date' => '2024-04-20',
-        'views' => 1234,
-        'uploader' => 'frontend_mester',
-        'tags' => ['frontend', 'html', 'css', 'bootstrap']
-    ],
-    2 => [
-        'title' => 'PHP bevezető',
-        'description' => 'Ismerd meg a PHP nyelv alapjait kezdőknek!',
-        'upload_date' => '2024-04-15',
-        'views' => 982,
-        'uploader' => 'php_guru',
-        'tags' => ['php', 'backend', 'alapok']
-    ],
-    3 => [
-        'title' => 'Oracle lekérdezések',
-        'description' => 'Alap SQL lekérdezések Oracle-ben, beleértve SELECT, WHERE, JOIN műveleteket.',
-        'upload_date' => '2024-04-10',
-        'views' => 723,
-        'uploader' => 'test',
-        'video_file' => 'public/videos/oracle_queries.mp4',
-        'tags' => ['sql', 'oracle', 'adatbázis']
-    ],
-];
+?>
+<div class="container py-5">
 
-$video = $videoId && isset($videos[$videoId]) ? $videos[$videoId] : null;
+<?php
+
+if (!$videoId || !is_numeric($videoId)) {
+    echo "<div class='alert alert-danger'>Hiányzó vagy érvénytelen videó ID.</div>";
+    exit;
+}
+
+$email = $_SESSION['email'];
+$video = getVideoDetailsForEdit($conn, $videoId, $email);
+if (!$video) {
+    echo "<div class='alert alert-danger'>Nincs jogosultság a videó szerkesztésére.</div>";
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['save'])) {
+        $title = $_POST['title'] ?? '';
+        $description = $_POST['description'] ?? '';
+        $tags = $_POST['tags'] ?? '';
+
+        if (empty($title) || empty($description)) {
+            echo "<div class='alert alert-danger'>A cím és a leírás nem lehet üres!</div>";
+        } else {
+            updateVideo($conn, $videoId, $title, $description, $tags);
+            $video = getVideoDetailsForEdit($conn, $videoId, $email);
+            echo "<div class='alert alert-success mt-3'>Sikeresen mentve!</div>";
+        }
+    }
+
+    if (isset($_POST['delete'])) {
+        deleteVideo($conn, $videoId);
+        echo "<div class='alert alert-success mt-3'>Videó törölve.</div>";
+        echo "<script>setTimeout(() => window.location.href = 'index.php?page=my_videos', 1500);</script>";
+        exit;
+    }
+}
 ?>
 
-<div class="container py-5">
-    <button onclick="history.back()" class="btn btn-outline-secondary mb-4">← Vissza</button>
-    <?php if (!$video): ?>
-        <div class="alert alert-danger">A megadott videó nem található.</div>
-    <?php else: ?>
+    <a href="index.php?page=video&id=<?= urlencode($videoId) ?>" class="btn btn-outline-secondary mb-4">← Vissza</a>
+    <form method="post">
+        <div class="mb-3">
+            <label for="title" class="form-label">Cím</label>
+            <input type="text" class="form-control" id="title" name="title" value="<?= htmlspecialchars($video['CIM']) ?>" maxlength="255" required>
+        </div>
 
+        <div class="mb-3">
+            <label for="description" class="form-label">Leírás</label>
+            <textarea class="form-control" id="description" name="description" rows="4" maxlength="1000" required><?= htmlspecialchars($video['LEIRAS']) ?></textarea>
+        </div>
 
-        <form method="post">
+        <div class="mb-3">
+            <label for="tags" class="form-label">#Tagek <small class="text-muted">(vesszővel elválasztva)</small></label>
+            <input type="text" class="form-control" id="tags" name="tags" placeholder="frontend, css, php"
+                   value="<?= htmlspecialchars(implode(', ', $video['TAGS'])) ?>">
+        </div>
 
-            <div class="mb-3">
-                <label for="title" class="form-label">Cím</label>
-                <input type="text" class="form-control" id="title" name="title" value="<?= $video['title'] ?>" maxlength="255" required>
-            </div>
-
-
-            <div class="mb-3">
-                <label for="description" class="form-label">Leírás</label>
-                <textarea class="form-control" id="description" name="description" rows="4" maxlength="1000" required><?= $video['description'] ?></textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="tags" class="form-label">#Tagek
-                    <small class="text-muted">(vesszővel elválasztva, pl.: frontend, html, css)</small>
-                </label>
-                <input type="text" class="form-control" id="tags" name="tags"
-                       value="<?= implode(', ', $video['tags']) ?>"
-                       placeholder="pl.: php, backend, alapok">
-            </div>
-
-            <div class="d-flex justify-content-between flex-wrap gap-2">
-                <button type="submit" name="save" class="btn btn-success">
-                    <i class="bi bi-save"></i> Mentés
-                </button>
-                <button type="submit" name="delete" class="btn btn-danger" onclick="return confirm('Biztosan törlöd ezt a videót?');">
-                    <i class="bi bi-trash"></i> Videó törlése
-                </button>
-            </div>
-        </form>
-    <?php endif; ?>
+        <div class="d-flex justify-content-between flex-wrap gap-2">
+            <button type="submit" name="save" class="btn btn-success">
+                <i class="bi bi-save"></i> Mentés
+            </button>
+            <button type="submit" name="delete" class="btn btn-danger" onclick="return confirm('Biztosan törlöd ezt a videót?');">
+                <i class="bi bi-trash"></i> Videó törlése
+            </button>
+        </div>
+    </form>
 </div>
-
-
