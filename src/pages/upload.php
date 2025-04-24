@@ -10,6 +10,11 @@ $username = $_SESSION['username'];
 
 require_once 'src/config/db.php';
 
+?>
+<div class="container py-5">
+
+<?php
+
 
 $email = $_SESSION['email'];
 $username = $_SESSION['username'];
@@ -40,24 +45,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['video_file'])) {
         oci_bind_by_name($stmt, ":id", $videoId, -1, SQLT_INT);
 
         $videoBlob = file_get_contents($videoTmpPath);
-
-        if (oci_execute($stmt, OCI_NO_AUTO_COMMIT) && $lob->save($videoBlob)) {
+        $success = oci_execute($stmt, OCI_NO_AUTO_COMMIT);
+        if ( $success && $lob->save($videoBlob)) {
             oci_commit($conn);
-            oci_free_statement($stmt);
             $lob->free();
-            echo "<div class='alert alert-success mt-3'>Sikeres feltöltés! (ID: $videoId)</div>";
+            oci_free_statement($stmt);
+            $tagList = array_filter(array_map('trim', explode(',', $_POST['tags'] ?? '')));
+            foreach ($tagList as $tag) {
+                $stmtTag = oci_parse($conn, "INSERT INTO VIDEO_KATEGORIA (VIDEO_ID, KATEGORIA_NEV) VALUES (:id, :tag)");
+                oci_bind_by_name($stmtTag, ":id", $videoId);
+                oci_bind_by_name($stmtTag, ":tag", $tag);
+                oci_execute($stmtTag);
+                oci_free_statement($stmtTag);
+            }
+
+            echo "<div class='alert alert-success mt-3'>Sikeres feltöltés!</div>";
         } else {
             oci_rollback($conn);
             echo "<div class='alert alert-danger mt-3'>Hiba történt a mentéskor.</div>";
         }
-
     }
 }
 ?>
 
 
-<div class="container py-5">
-    <button onclick="history.back()" class="btn btn-outline-secondary mb-4">← Vissza</button>
+    <button onclick="window.location.href='index.php?page=my_videos'" class="btn btn-outline-secondary mb-4">← Vissza</button>
 
     <form method="post" enctype="multipart/form-data">
         <div class="mb-3">
