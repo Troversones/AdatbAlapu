@@ -91,7 +91,6 @@ function getVideoDetailsForEdit($conn, $videoId, $email) {
         return null;
     }
 
-    // Csatolt tagek
     $stmt = oci_parse($conn, "SELECT KATEGORIA_NEV FROM VIDEO_KATEGORIA WHERE VIDEO_ID = :id");
     oci_bind_by_name($stmt, ":id", $videoId);
     oci_execute($stmt);
@@ -114,7 +113,6 @@ function updateVideo($conn, $videoId, $title, $description, $tags) {
     oci_execute($stmt);
     oci_free_statement($stmt);
 
-    // Új kategóriák
     $stmt = oci_parse($conn, "DELETE FROM VIDEO_KATEGORIA WHERE VIDEO_ID = :id");
     oci_bind_by_name($stmt, ":id", $videoId);
     oci_execute($stmt);
@@ -134,6 +132,63 @@ function updateVideo($conn, $videoId, $title, $description, $tags) {
 
 function deleteVideo($conn, $videoId) {
     $stmt = oci_parse($conn, "DELETE FROM VIDEO WHERE VIDEO_ID = :id");
+    oci_bind_by_name($stmt, ":id", $videoId);
+    oci_execute($stmt);
+    oci_free_statement($stmt);
+}
+
+function getVideoReactions($conn, $videoId) {
+    $stmt = oci_parse($conn, "
+        SELECT 
+            SUM(CASE WHEN TIPUS = 'like' THEN 1 ELSE 0 END) AS likes,
+            SUM(CASE WHEN TIPUS = 'dislike' THEN 1 ELSE 0 END) AS dislikes
+        FROM VIDEO_REAKCIO
+        WHERE VIDEO_ID = :id
+    ");
+    oci_bind_by_name($stmt, ":id", $videoId);
+    oci_execute($stmt);
+    $result = oci_fetch_assoc($stmt);
+    oci_free_statement($stmt);
+    return $result;
+}
+
+function getUserReaction($conn, $videoId, $email) {
+    $stmt = oci_parse($conn, "
+        SELECT TIPUS FROM VIDEO_REAKCIO WHERE VIDEO_ID = :id AND FELHASZNALO_EMAIL = :email
+    ");
+    oci_bind_by_name($stmt, ":id", $videoId);
+    oci_bind_by_name($stmt, ":email", $email);
+    oci_execute($stmt);
+    $result = oci_fetch_assoc($stmt);
+    oci_free_statement($stmt);
+    return $result['TIPUS'] ?? null;
+}
+
+function setReaction($conn, $videoId, $email, $type) {
+    $stmt = oci_parse($conn, "
+        DELETE FROM VIDEO_REAKCIO WHERE VIDEO_ID = :id AND FELHASZNALO_EMAIL = :email
+    ");
+    oci_bind_by_name($stmt, ":id", $videoId);
+    oci_bind_by_name($stmt, ":email", $email);
+    oci_execute($stmt);
+    oci_free_statement($stmt);
+
+    if (in_array($type, ['like', 'dislike'])) {
+        $stmt = oci_parse($conn, "
+            INSERT INTO VIDEO_REAKCIO (VIDEO_ID, FELHASZNALO_EMAIL, TIPUS)
+            VALUES (:id, :email, :type)
+        ");
+        oci_bind_by_name($stmt, ":id", $videoId);
+        oci_bind_by_name($stmt, ":email", $email);
+        oci_bind_by_name($stmt, ":type", $type);
+        oci_execute($stmt);
+        oci_free_statement($stmt);
+    }
+}
+
+function incrementViewCount($conn, $videoId) {
+    $sql = "UPDATE VIDEO SET NEZETTSEG = NEZETTSEG + 1 WHERE VIDEO_ID = :id";
+    $stmt = oci_parse($conn, $sql);
     oci_bind_by_name($stmt, ":id", $videoId);
     oci_execute($stmt);
     oci_free_statement($stmt);

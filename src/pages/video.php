@@ -8,8 +8,26 @@ $videoId = $_GET['id'] ?? null;
 require_once 'src/config/db.php';
 include 'src/includes/functions.php';
 
+if (!isset($_SESSION['viewed_' . $videoId])) {
+    incrementViewCount($conn, $videoId);
+    $_SESSION['viewed_' . $videoId] = true;
+}
 
 $video = $videoId ? getVideoById($conn, $videoId) : null;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reaction'])) {
+    $reaction = $_POST['reaction'];
+    if (in_array($reaction, ['like', 'dislike', 'remove'])) {
+        setReaction($conn, $videoId, $_SESSION['email'], $reaction === 'remove' ? null : $reaction);
+        header("Location: index.php?page=video&id=" . urlencode($videoId));
+        exit;
+    }
+}
+
+
+
+$reactions = getVideoReactions($conn, $videoId);
+$userReaction = getUserReaction($conn, $videoId, $_SESSION['email']);
 
 $comments = [
     [
@@ -69,10 +87,14 @@ $playlists = ['Tananyagok', 'Frontend kedvencek', 'Később megnézendő'];
                         <span class="text-muted">Feltöltve: <?= $video['upload_date'] ?></span> |
                         <span class="text-muted"><?= $video['views'] ?> megtekintés</span>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-outline-success btn-sm"><i class="bi bi-hand-thumbs-up-fill"></i> Tetszik</button>
-                        <button class="btn btn-outline-danger btn-sm"><i class="bi bi-hand-thumbs-down-fill"></i> Nem tetszik</button>
-                    </div>
+                    <form method="post" class="d-flex gap-2">
+                        <button type="submit" name="reaction" value="<?= $userReaction === 'like' ? 'remove' : 'like' ?>" class="btn btn-outline-success btn-sm <?= $userReaction === 'like' ? 'active' : '' ?>">
+                            <i class="bi bi-hand-thumbs-up-fill"></i> <?= $reactions['LIKES'] ?? 0 ?>
+                        </button>
+                        <button type="submit" name="reaction" value="<?= $userReaction === 'dislike' ? 'remove' : 'dislike' ?>" class="btn btn-outline-danger btn-sm <?= $userReaction === 'dislike' ? 'active' : '' ?>">
+                            <i class="bi bi-hand-thumbs-down-fill"></i> <?= $reactions['DISLIKES'] ?? 0 ?>
+                        </button>
+                    </form>
                 </div>
 
                 <p><?= nl2br($video['description']) ?></p>
@@ -90,9 +112,11 @@ $playlists = ['Tananyagok', 'Frontend kedvencek', 'Később megnézendő'];
                             <i class="bi bi-person-circle fs-2 text-primary me-2"></i>
                             <div>
                                 <div class="fw-semibold">
-                                    <a href="index.php?page=user&username=<?= urlencode($video['uploader']) ?>"
+                                    <a href="<?= ($_SESSION['email'] === $video['uploader'])
+                                        ? 'index.php?page=my_videos'
+                                        : 'index.php?page=user&username=' . urlencode($video['uploader']) ?>"
                                        class="text-decoration-none text-dark">
-                                        <?= $video['uploader'] ?>
+                                        <?= htmlspecialchars($video['uploader']) ?>
                                     </a>
                                 </div>
                             </div>

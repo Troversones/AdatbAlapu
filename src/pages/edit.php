@@ -12,7 +12,6 @@ $videoId = $_GET['id'] ?? null;
 
 ?>
 <div class="container py-5">
-
 <?php
 
 if (!$videoId || !is_numeric($videoId)) {
