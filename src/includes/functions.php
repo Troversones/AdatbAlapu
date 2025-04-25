@@ -287,4 +287,89 @@ function handleProfileUpdate($conn) {
     }
     return [$message, $userData];
 }
+
+
+function addComment($conn, $videoId, $userEmail, $content) {
+    $sql = "INSERT INTO HOZZASZOLAS (FELHASZNALO_EMAIL, VIDEO_ID, TARTALOM) 
+            VALUES (:email, :videoId, EMPTY_CLOB()) 
+            RETURNING TARTALOM INTO :content";
+
+    $stmt = oci_parse($conn, $sql);
+
+    $lob = oci_new_descriptor($conn, OCI_D_LOB);
+
+    oci_bind_by_name($stmt, ":email", $userEmail);
+    oci_bind_by_name($stmt, ":videoId", $videoId);
+    oci_bind_by_name($stmt, ":content", $lob, -1, OCI_B_CLOB);
+
+    $success = oci_execute($stmt, OCI_NO_AUTO_COMMIT);
+
+    if ($success && $lob->save($content)) {
+        oci_commit($conn);
+    } else {
+        oci_rollback($conn);
+    }
+
+    $lob->free();
+    oci_free_statement($stmt);
+}
+
+
+function getCommentsByVideo($conn, $videoId, $currentUserEmail) {
+    $comments = [];
+    $sql = "SELECT 
+                h.HOZZASZOLAS_ID, 
+                TO_CHAR(h.TARTALOM) AS TARTALOM, 
+                h.FELHASZNALO_EMAIL, 
+                h.DATUM,
+                u.FELHASZNALONEV,
+                SUM(CASE WHEN r.TIPUS = 'like' THEN 1 ELSE 0 END) AS likes,
+                SUM(CASE WHEN r.TIPUS = 'dislike' THEN 1 ELSE 0 END) AS dislikes,
+                (SELECT TIPUS FROM HOZZASZOLAS_REAKCIO WHERE FELHASZNALO_EMAIL = :currentUser AND HOZZASZOLAS_ID = h.HOZZASZOLAS_ID) AS USER_REACTION
+            FROM HOZZASZOLAS h
+            JOIN FELHASZNALO u ON h.FELHASZNALO_EMAIL = u.EMAIL
+            LEFT JOIN HOZZASZOLAS_REAKCIO r ON h.HOZZASZOLAS_ID = r.HOZZASZOLAS_ID
+            WHERE h.VIDEO_ID = :videoId
+            GROUP BY h.HOZZASZOLAS_ID, TO_CHAR(h.TARTALOM), h.FELHASZNALO_EMAIL, h.DATUM, u.FELHASZNALONEV
+            ORDER BY h.DATUM DESC";
+
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":videoId", $videoId);
+    oci_bind_by_name($stmt, ":currentUser", $currentUserEmail);
+    oci_execute($stmt);
+
+    while ($row = oci_fetch_assoc($stmt)) {
+        $comments[] = $row;
+    }
+
+    oci_free_statement($stmt);
+    return $comments;
+}
+
+function deleteComment($conn, $commentId, $userEmail) {
+    $sql = "DELETE FROM HOZZASZOLAS WHERE HOZZASZOLAS_ID = :id AND FELHASZNALO_EMAIL = :email";
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":id", $commentId);
+    oci_bind_by_name($stmt, ":email", $userEmail);
+    oci_execute($stmt);
+    oci_free_statement($stmt);
+}
+
+function reactToComment($conn, $commentId, $userEmail, $type) {
+    $delete = oci_parse($conn, "DELETE FROM HOZZASZOLAS_REAKCIO WHERE HOZZASZOLAS_ID = :id AND FELHASZNALO_EMAIL = :email");
+    oci_bind_by_name($delete, ":id", $commentId);
+    oci_bind_by_name($delete, ":email", $userEmail);
+    oci_execute($delete);
+    oci_free_statement($delete);
+
+    if (in_array($type, ['like', 'dislike'])) {
+        $insert = oci_parse($conn, "INSERT INTO HOZZASZOLAS_REAKCIO (HOZZASZOLAS_ID, FELHASZNALO_EMAIL, TIPUS) VALUES (:id, :email, :type)");
+        oci_bind_by_name($insert, ":id", $commentId);
+        oci_bind_by_name($insert, ":email", $userEmail);
+        oci_bind_by_name($insert, ":type", $type);
+        oci_execute($insert);
+        oci_free_statement($insert);
+    }
+}
+
 ?>

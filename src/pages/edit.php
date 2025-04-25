@@ -10,19 +10,17 @@ include 'src/includes/functions.php';
 
 $videoId = $_GET['id'] ?? null;
 
-?>
-<div class="container py-5">
-<?php
+$message = null;
 
 if (!$videoId || !is_numeric($videoId)) {
-    echo "<div class='alert alert-danger'>Hiányzó vagy érvénytelen videó ID.</div>";
+    $message = "<div class='alert alert-danger'>Hiányzó vagy érvénytelen videó ID.</div>";
     exit;
 }
 
 $email = $_SESSION['email'];
 $video = getVideoDetailsForEdit($conn, $videoId, $email);
 if (!$video) {
-    echo "<div class='alert alert-danger'>Nincs jogosultság a videó szerkesztésére.</div>";
+    $message = "<div class='alert alert-danger'>Nincs jogosultság a videó szerkesztésére.</div>";
     exit;
 }
 
@@ -33,22 +31,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $tags = $_POST['tags'] ?? '';
 
         if (empty($title) || empty($description)) {
-            echo "<div class='alert alert-danger'>A cím és a leírás nem lehet üres!</div>";
+            $message = "<div class='alert alert-danger'>A cím és a leírás nem lehet üres!</div>";
         } else {
             updateVideo($conn, $videoId, $title, $description, $tags);
             $video = getVideoDetailsForEdit($conn, $videoId, $email);
-            echo "<div class='alert alert-success mt-3'>Sikeresen mentve!</div>";
+            $message = "<div class='alert alert-success mt-3'>Sikeresen mentve!</div>";
         }
     }
 
     if (isset($_POST['delete'])) {
         deleteVideo($conn, $videoId);
-        echo "<div class='alert alert-success mt-3'>Videó törölve.</div>";
+        $message = "<div class='alert alert-success mt-3'>Videó törölve.</div>";
         echo "<script>setTimeout(() => window.location.href = 'index.php?page=my_videos', 1500);</script>";
         exit;
     }
 }
 ?>
+<div class="container py-5">
+<?= $message ?>
 
     <a href="index.php?page=video&id=<?= urlencode($videoId) ?>" class="btn btn-outline-secondary mb-4">← Vissza</a>
     <form method="post">

@@ -30,25 +30,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_subscribe'])) 
     exit;
 }
 
-
-
 $reactions = getVideoReactions($conn, $videoId);
 $userReaction = getUserReaction($conn, $videoId, $_SESSION['email']);
 
-$comments = [
-    [
-        'user' => 'htmlfan',
-        'text' => 'Nagyon hasznos volt, köszi!',
-        'likes' => 12,
-        'dislikes' => 0
-    ],
-    [
-        'user' => 'noobcoder',
-        'text' => 'Nem teljesen értettem a grid részt :(',
-        'likes' => 3,
-        'dislikes' => 2
-    ]
-];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['new_comment']) && !empty(trim($_POST['new_comment']))) {
+        addComment($conn, $videoId, $_SESSION['email'], $_POST['new_comment']);
+        header("Location: index.php?page=video&id=" . urlencode($videoId));
+        exit;
+    }
+
+    if (isset($_POST['delete_comment'])) {
+        deleteComment($conn, $_POST['delete_comment'], $_SESSION['email']);
+        header("Location: index.php?page=video&id=" . urlencode($videoId));
+        exit;
+    }
+
+    if (isset($_POST['comment_react']) && isset($_POST['reaction_type'])) {
+        reactToComment($conn, $_POST['comment_react'], $_SESSION['email'], $_POST['reaction_type']);
+        header("Location: index.php?page=video&id=" . urlencode($videoId));
+        exit;
+    }
+}
+
+$comments = getCommentsByVideo($conn, $videoId, $_SESSION['email']);
+
+
 
 $more_videos = [
     ['title' => 'HTML alapok', 'uploader' => 'frontend_mester'],
@@ -94,10 +101,10 @@ $playlists = ['Tananyagok', 'Frontend kedvencek', 'Később megnézendő'];
                         <span class="text-muted"><?= $video['views'] ?> megtekintés</span>
                     </div>
                     <form method="post" class="d-flex gap-2">
-                        <button type="submit" name="reaction" value="<?= $userReaction === 'like' ? 'remove' : 'like' ?>" class="btn btn-outline-success btn-sm <?= $userReaction === 'like' ? 'active' : '' ?>">
+                        <button type="submit" name="reaction" value="<?= $userReaction === 'like' ? 'remove' : 'like' ?>" class="btn btn-outline-success btn-sm <?= $userReaction === 'like' ? 'active' : '' ?>  <?= $_SESSION['email'] === $video['uploader'] ? 'disabled' : '' ?>">
                             <i class="bi bi-hand-thumbs-up-fill"></i> <?= $reactions['LIKES'] ?? 0 ?>
                         </button>
-                        <button type="submit" name="reaction" value="<?= $userReaction === 'dislike' ? 'remove' : 'dislike' ?>" class="btn btn-outline-danger btn-sm <?= $userReaction === 'dislike' ? 'active' : '' ?>">
+                        <button type="submit" name="reaction" value="<?= $userReaction === 'dislike' ? 'remove' : 'dislike' ?>" class="btn btn-outline-danger btn-sm <?= $userReaction === 'dislike' ? 'active' : '' ?>  <?= $_SESSION['email'] === $video['uploader'] ? 'disabled' : '' ?>">
                             <i class="bi bi-hand-thumbs-down-fill"></i> <?= $reactions['DISLIKES'] ?? 0 ?>
                         </button>
                     </form>
@@ -156,30 +163,26 @@ $playlists = ['Tananyagok', 'Frontend kedvencek', 'Később megnézendő'];
                 </form>
 
                 <h5 class="mt-5 mb-3">Hozzászólások</h5>
-                <div class="list-group">
+                <div class="list-group mb-4">
                     <?php foreach ($comments as $comment): ?>
-                        <div class="list-group-item">
-                            <strong><?= $comment['user'] ?>:</strong>
-                            <p class="mb-1"><?= $comment['text'] ?></p>
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-outline-success btn-sm"><i class="bi bi-hand-thumbs-up-fill"></i> <?= $comment['likes'] ?></button>
-                                <button class="btn btn-outline-danger btn-sm"><i class="bi bi-hand-thumbs-down-fill"></i> <?= $comment['dislikes'] ?></button>
-                            </div>
-                        </div>
+                        <?php include 'src/includes/comment_card.php'; ?>
                     <?php endforeach; ?>
-                    <form method="post" class="mb-4">
-                        <div class="mb-1 mt-3">
-                            <textarea class="form-control" id="new_comment" name="new_comment" rows="3" placeholder="Írd ide a hozzászólásod..." required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-chat-dots"></i> Hozzászólás küldése
-                        </button>
-                    </form>
+                </div>
+
+                <form method="post" class="mb-4">
+                    <div class="mb-1">
+                        <textarea class="form-control" name="new_comment" rows="3" placeholder="Írd ide a hozzászólásod..." ></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-chat-dots"></i> Hozzászólás küldése
+                    </button>
+                </form>
+
                 </div>
             </div>
 
 
-        </div>
+
 
         <h4 class="mt-4 mb-2">Feltöltő egyéb videói</h4>
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-sm-4 g-4">

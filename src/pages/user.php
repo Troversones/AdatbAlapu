@@ -14,6 +14,14 @@ $videos = [];
 if ($email) {
     $videos = getUserVideos($conn, $email);
 }
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_subscription'])) {
+    toggleSubscription($conn, $_SESSION['email'], $email);
+    header("Location: index.php?page=user&email=" . urlencode($email));
+    exit;
+}
+
+$isSubscribed = ($email && $_SESSION['email'] !== $email) ? isSubscribed($conn, $_SESSION['email'], $email) : false;
 ?>
 
 <div class="container py-5">
@@ -24,9 +32,11 @@ if ($email) {
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <h2 class="mb-0"><?= htmlspecialchars($email) ?></h2>
             <?php if ($_SESSION['email'] !== $email): ?>
-                <button class="btn btn-outline-primary">
-                    <i class="bi bi-bell-fill"></i> Feliratkozás
-                </button>
+                <form method="post">
+                    <button type="submit" name="toggle_subscription" class="btn <?= $isSubscribed ? 'btn-outline-danger' : 'btn-outline-primary' ?>">
+                        <i class="bi <?= $isSubscribed ? 'bi-x-circle' : 'bi-bell-fill' ?>"></i> <?= $isSubscribed ? 'Leiratkozás' : 'Feliratkozás' ?>
+                    </button>
+                </form>
             <?php endif; ?>
         </div>
 
