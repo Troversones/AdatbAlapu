@@ -1,29 +1,28 @@
 <?php
+require_once __DIR__ . '/../config/db.php';
 session_start();
 if (!isset($_SESSION['email'])) {
     header("Location: index.php?page=login");
     exit;
 }
+include 'src/includes/functions.php';
+list($message, $userData) = handleProfileUpdate($conn);
 ?>
-<!-- a felhasználói adatoknál szerintem csak a felhasználónév legyen változtható-->
 
 <div class="container mt-5 mb-5">
     <h2 class="mb-4">Profil adatok</h2>
 
-    <form>
+    <?= $message ?>
+
+    <form method="post">
         <div class="mb-3">
             <label for="username" class="form-label">Felhasználónév</label>
-            <input type="text" class="form-control" id="username" name="username" value="peldauser">
+            <input type="text" class="form-control" id="username" name="username" value="<?= htmlentities($userData['FELHASZNALONEV']) ?>" required>
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Email cím</label>
-            <input type="text" class="form-control" value="pelda@email.com" readonly>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Születési dátum</label>
-            <input type="text" class="form-control" value="2000-01-01" readonly>
+            <label for="email" class="form-label">Email cím</label>
+            <input type="email" class="form-control" id="email" name="email" value="<?= htmlentities($userData['EMAIL']) ?>" required>
         </div>
 
         <div class="d-flex justify-content-between">
@@ -35,5 +34,3 @@ if (!isset($_SESSION['email'])) {
         </div>
     </form>
 </div>
-
-<?php
