@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>VideoShare</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
     <link rel="stylesheet" href="public/css/index.css">
 
 </head>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="public/js/index.js"></script>
 
-<body class="min-vh-100 d-flex flex-column">
+
+<body class="min-vh-100 d-flex flex-column bg-light">
 <div>
     <?php
     $page = $_GET['page'] ?? 'landing';
@@ -32,11 +33,13 @@
     if (file_exists($file)) {
         include $file;
     } else {
-        echo "<p>Az oldal nem található.</p>";
+        echo "<p class='mt-5 w-100 text-center fs-5'>Az oldal nem található.</p>";
     }
     ?>
 </div>
 
 </body>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="public/js/index.js"></script>
 </html>
 

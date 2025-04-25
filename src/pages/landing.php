@@ -1,3 +1,18 @@
+<?php
+session_start();
+if (isset($_SESSION['email'])) {
+    header("Location: index.php?page=home");
+    exit;
+}
+
+//if (!isset($_SESSION['username'])) {
+//    header("Location: index.php?page=signup");
+//    exit;
+//}
+//
+//$username = $_SESSION['username'];
+?>
+
 <div class="container py-5 text-center">
     <div class="row justify-content-center align-items-center">
         <div class="col-lg-8">
@@ -8,7 +23,15 @@
             <div class="d-flex justify-content-center gap-3">
                 <a href="index.php?page=signup" class="btn btn-success btn-lg">Regisztrálok</a>
                 <a href="index.php?page=login" class="btn btn-outline-light btn-lg bg-primary text-white">Bejelentkezés</a>
+              <!-- erre már nincs szükség mert a profilnál van kijelentkezés gomb
+                <a href="index.php?page=logout" class="btn btn-danger btn-lg">Kijelentkezés</a> -->
+            </div> <br>
+            <!--
+            A gomb a bejelentkezés tesztelésre
+            <div class="alert alert-success text-center my-4" role="alert">
+                Üdv újra, <strong><?//= htmlentities($username) ?></strong>!
             </div>
+            -->
         </div>
     </div>
 </div>
