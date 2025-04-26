@@ -4,6 +4,22 @@ if (!isset($_SESSION['email'])) {
     header("Location: index.php?page=login");
     exit;
 }
+
+
+$backLink = 'index.php?page=home';
+if (isset($_SESSION['video_back'])) {
+    $from = $_SESSION['video_back']['from'] ?? 'home';
+    $email = $_SESSION['video_back']['email'] ?? null;
+
+    if ($from === 'home') {
+        $backLink = 'index.php?page=home';
+    } elseif ($from === 'my_videos') {
+        $backLink = 'index.php?page=my_videos';
+    } elseif ($from === 'user' && $email) {
+        $backLink = 'index.php?page=user&email=' . urlencode($email);
+    }
+}
+
 $videoId = $_GET['id'] ?? null;
 require_once 'src/config/db.php';
 include 'src/includes/functions.php';
@@ -57,14 +73,9 @@ $comments = getCommentsByVideo($conn, $videoId, $_SESSION['email']);
 
 
 
-$more_videos = [
-    ['title' => 'HTML alapok', 'uploader' => 'frontend_mester'],
-    ['title' => 'CSS trükkök', 'uploader' => 'frontend_mester'],
-    ['title' => 'PHP bevezető', 'uploader' => 'php_guru'],
-    ['title' => 'PDO lekérdezések', 'uploader' => 'php_guru'],
-    ['title' => 'Utazás Rómába', 'uploader' => 'travel_vlogger'],
-    ['title' => 'Vlog: Reggeli rutin', 'uploader' => 'travel_vlogger']
-];
+$more_videos = array_filter(getUserVideos($conn, $video['uploader']), function($v) use ($videoId) {
+    return $v['ID'] != $videoId;
+});
 
 
 $playlists = ['Tananyagok', 'Frontend kedvencek', 'Később megnézendő'];
@@ -73,9 +84,9 @@ $playlists = ['Tananyagok', 'Frontend kedvencek', 'Később megnézendő'];
 <div class="container py-5">
     <?php if (!$video): ?>
         <div class="alert alert-danger">A megadott videó nem található.</div>
-        <button onclick="history.back()" class="btn btn-outline-secondary mb-4">← Vissza</button>
+        <button onclick="location.href='<?= $backLink ?>'" class="btn btn-outline-secondary mb-4">← Vissza</button>
     <?php else: ?>
-    <button onclick="history.back()" class="btn btn-outline-secondary mb-4">← Vissza</button>
+    <button onclick="location.href='<?= $backLink ?>'" class="btn btn-outline-secondary mb-4">← Vissza</button>
 
 
 
@@ -173,7 +184,7 @@ $playlists = ['Tananyagok', 'Frontend kedvencek', 'Később megnézendő'];
                     <div class="mb-1">
                         <textarea class="form-control" name="new_comment" rows="3" placeholder="Írd ide a hozzászólásod..." ></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary mt-2">
                         <i class="bi bi-chat-dots"></i> Hozzászólás küldése
                     </button>
                 </form>
@@ -188,10 +199,14 @@ $playlists = ['Tananyagok', 'Frontend kedvencek', 'Később megnézendő'];
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-sm-4 g-4">
 
             <?php
+            if (!empty( $more_videos)):
             foreach ($more_videos as $video):
                 include 'src/includes/video_card.php';
             endforeach;
+            else:
             ?>
+            <p>A feltöltőnek nincsenek egyéb videói</p>
+            <?php endif; ?>
         </div>
 
 

@@ -43,7 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         deleteVideo($conn, $videoId);
         $message = "<div class='alert alert-success mt-3'>Videó törölve.</div>";
         echo "<script>setTimeout(() => window.location.href = 'index.php?page=my_videos', 1500);</script>";
-        exit;
     }
 }
 ?>
@@ -54,12 +53,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <form method="post">
         <div class="mb-3">
             <label for="title" class="form-label">Cím</label>
-            <input type="text" class="form-control" id="title" name="title" value="<?= htmlspecialchars($video['CIM']) ?>" maxlength="255" required>
+            <input type="text" class="form-control" id="title" name="title" value="<?= htmlspecialchars($video['CIM']) ?>" maxlength="255" >
         </div>
 
         <div class="mb-3">
             <label for="description" class="form-label">Leírás</label>
-            <textarea class="form-control" id="description" name="description" rows="4" maxlength="1000" required><?= htmlspecialchars($video['LEIRAS']) ?></textarea>
+            <textarea class="form-control" id="description" name="description" rows="4" maxlength="1000" ><?= htmlspecialchars($video['LEIRAS']) ?></textarea>
         </div>
 
         <div class="mb-3">

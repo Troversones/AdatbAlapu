@@ -1,29 +1,19 @@
 <?php
 session_start();
+require_once 'src/config/db.php';
+include 'src/includes/functions.php';
+
 if (!isset($_SESSION['email'])) {
     header("Location: index.php?page=login");
     exit;
 }
 
-// Dummy felhasználói statisztikák
-$users = [
-    ['username' => 'frontend_mester', 'uploads' => 8, 'comments' => 14],
-    ['username' => 'php_guru', 'uploads' => 5, 'comments' => 22],
-    ['username' => 'noobcoder', 'uploads' => 2, 'comments' => 30],
-    ['username' => 'travel_vlogger', 'uploads' => 6, 'comments' => 9],
-];
-
-// Rangsorolás aktivitás szerint (feltöltés + komment pont)
-usort($users, function($a, $b) {
-    $scoreA = $a['uploads'] * 2 + $a['comments'];
-    $scoreB = $b['uploads'] * 2 + $b['comments'];
-    return $scoreB <=> $scoreA;
-});
+$users = getLeaderboardData($conn);
+$currentUserEmail = $_SESSION['email'];
 ?>
 
 <div class="container py-5">
-    <h2 class="mb-4"><i class="bi bi-trophy-fill"></i>
-        Legaktívabb tagok</h2>
+    <h2 class="mb-4"><i class="bi bi-trophy-fill"></i> Legaktívabb tagok</h2>
 
     <div class="table-responsive">
         <table class="table table-striped align-middle">
@@ -38,18 +28,26 @@ usort($users, function($a, $b) {
             </thead>
             <tbody>
             <?php foreach ($users as $i => $user): ?>
-                <tr>
-                    <td><?= $i + 1 ?></td>
+                <?php
+                $rank = $i + 1;
+                $highlightClass = ($user['EMAIL'] === $currentUserEmail) ? 'table-warning fw-bold' : '';
+                ?>
+                <tr class="<?= $highlightClass ?>">
+                    <td><?=  $rank ?></td>
                     <td>
-                        <a href="index.php?page=user&username=<?= urlencode($user['username']) ?>"
+                        <?php if ($user['EMAIL'] === $currentUserEmail):?>
+                        <a href="index.php?page=my_videos"
+                        <?php else: ?>
+                        <a href="index.php?page=user&email=<?= urlencode($user['EMAIL']) ?>"
+                            <?php endif; ?>
                            class="text-decoration-none text-dark fw-semibold">
                             <i class="bi bi-person-circle text-primary me-1"></i>
-                            <?= $user['username'] ?>
+                            <?= htmlspecialchars($user['USERNAME']) ?>
                         </a>
                     </td>
-                    <td><?= $user['uploads'] ?></td>
-                    <td><?= $user['comments'] ?></td>
-                    <td><?= $user['uploads'] * 2 + $user['comments'] ?></td>
+                    <td><?= $user['UPLOADS'] ?></td>
+                    <td><?= $user['COMMENTS'] ?></td>
+                    <td><?= $user['activity_points'] ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

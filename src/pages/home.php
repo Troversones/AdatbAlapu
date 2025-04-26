@@ -6,8 +6,8 @@ if (!isset($_SESSION['email'])) {
 }
 require_once __DIR__ . '/../config/db.php';
 include 'src/includes/functions.php';
+$fromPage = 'home';
 $videos = getRecentVideos($conn, 20);
-//echo '<pre>'; print_r($videos); echo '</pre>'; asszociatív tömb teszt
 ?>
 <form method="get" class="mt-1 px-3">
     <input type="hidden" name="page" value="home">

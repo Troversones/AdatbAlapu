@@ -7,7 +7,7 @@ if (!isset($_SESSION['email'])) {
 
 require_once 'src/config/db.php';
 include 'src/includes/functions.php';
-
+$fromPage = 'user';
 $email = $_GET['email'] ?? null;
 $videos = [];
 
@@ -25,7 +25,6 @@ $isSubscribed = ($email && $_SESSION['email'] !== $email) ? isSubscribed($conn, 
 ?>
 
 <div class="container py-5">
-    <button onclick="history.back()" class="btn btn-outline-secondary mb-4">← Vissza</button>
     <?php if (!$email): ?>
         <div class="alert alert-danger">Felhasználó nem található.</div>
     <?php else: ?>

@@ -372,4 +372,38 @@ function reactToComment($conn, $commentId, $userEmail, $type) {
     }
 }
 
+function getLeaderboardData($conn) {
+    $users = [];
+
+    $sql = "
+        SELECT 
+            f.FELHASZNALONEV AS username, 
+            f.EMAIL AS email,
+            COUNT(DISTINCT v.VIDEO_ID) AS uploads,
+            COUNT(DISTINCT h.HOZZASZOLAS_ID) AS comments
+        FROM FELHASZNALO f
+        LEFT JOIN VIDEO v ON v.FELHASZNALO_EMAIL = f.EMAIL
+        LEFT JOIN HOZZASZOLAS h ON h.FELHASZNALO_EMAIL = f.EMAIL
+        GROUP BY f.FELHASZNALONEV, f.EMAIL
+    ";
+
+    $stmt = oci_parse($conn, $sql);
+    oci_execute($stmt);
+
+    while ($row = oci_fetch_assoc($stmt)) {
+        $uploads = $row['UPLOADS'] ?? 0;
+        $comments = $row['COMMENTS'] ?? 0;
+        $row['activity_points'] = $uploads * 2 + $comments;
+        $users[] = $row;
+    }
+
+    oci_free_statement($stmt);
+
+    usort($users, function($a, $b) {
+        return $b['activity_points'] <=> $a['activity_points'];
+    });
+
+    return $users;
+}
+
 ?>
