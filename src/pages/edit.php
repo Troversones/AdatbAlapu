@@ -41,8 +41,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (isset($_POST['delete'])) {
         deleteVideo($conn, $videoId);
-        $message = "<div class='alert alert-success mt-3'>Videó törölve.</div>";
+        echo "<div class='container py-5'> <div class='alert alert-success mt-3'>Videó törölve.</div> </div>";
         echo "<script>setTimeout(() => window.location.href = 'index.php?page=my_videos', 1500);</script>";
+        exit;
     }
 }
 ?>
