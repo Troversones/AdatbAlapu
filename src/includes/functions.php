@@ -306,25 +306,47 @@ function handleProfileUpdate($conn) {
         if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
             $message = "<div class='alert alert-danger'>Érvénytelen email formátum.</div>";
         } else {
-            $updateSql = "UPDATE FELHASZNALO SET FELHASZNALONEV = :username, EMAIL = :new_email WHERE EMAIL = :current_email";
-            $updateStmt = oci_parse($conn, $updateSql);
+            $emailCheckSql = "SELECT COUNT(*) AS CNT FROM FELHASZNALO WHERE EMAIL = :new_email AND EMAIL != :current_email";
+            $emailCheckStmt = oci_parse($conn, $emailCheckSql);
+            oci_bind_by_name($emailCheckStmt, ":new_email", $newEmail);
+            oci_bind_by_name($emailCheckStmt, ":current_email", $currentEmail);
+            oci_execute($emailCheckStmt);
+            $emailRow = oci_fetch_assoc($emailCheckStmt);
+            oci_free_statement($emailCheckStmt);
 
-            oci_bind_by_name($updateStmt, ":username", $newUsername);
-            oci_bind_by_name($updateStmt, ":new_email", $newEmail);
-            oci_bind_by_name($updateStmt, ":current_email", $currentEmail);
+            $usernameCheckSql = "SELECT COUNT(*) AS CNT FROM FELHASZNALO WHERE FELHASZNALONEV = :new_username AND EMAIL != :current_email";
+            $usernameCheckStmt = oci_parse($conn, $usernameCheckSql);
+            oci_bind_by_name($usernameCheckStmt, ":new_username", $newUsername);
+            oci_bind_by_name($usernameCheckStmt, ":current_email", $currentEmail);
+            oci_execute($usernameCheckStmt);
+            $usernameRow = oci_fetch_assoc($usernameCheckStmt);
+            oci_free_statement($usernameCheckStmt);
 
-            if (oci_execute($updateStmt)) {
-                $_SESSION['email'] = $newEmail;
-                $_SESSION['username'] = $newUsername;
-                $message = "<div class='alert alert-success'>Profil sikeresen frissítve.</div>";
-
-                $userData['EMAIL'] = $newEmail;
-                $userData['FELHASZNALONEV'] = $newUsername;
+            if ($emailRow['CNT'] > 0) {
+                $message = "<div class='alert alert-danger'>Ez az email cím már foglalt.</div>";
+            } elseif ($usernameRow['CNT'] > 0) {
+                $message = "<div class='alert alert-danger'>Ez a felhasználónév már foglalt.</div>";
             } else {
-                $message = "<div class='alert alert-danger'>Hiba történt a mentés során.</div>";
-            }
+                $updateSql = "UPDATE FELHASZNALO SET FELHASZNALONEV = :username, EMAIL = :new_email WHERE EMAIL = :current_email";
+                $updateStmt = oci_parse($conn, $updateSql);
 
-            oci_free_statement($updateStmt);
+                oci_bind_by_name($updateStmt, ":username", $newUsername);
+                oci_bind_by_name($updateStmt, ":new_email", $newEmail);
+                oci_bind_by_name($updateStmt, ":current_email", $currentEmail);
+
+                if (oci_execute($updateStmt)) {
+                    $_SESSION['email'] = $newEmail;
+                    $_SESSION['username'] = $newUsername;
+                    $message = "<div class='alert alert-success'>Profil sikeresen frissítve.</div>";
+
+                    $userData['EMAIL'] = $newEmail;
+                    $userData['FELHASZNALONEV'] = $newUsername;
+                } else {
+                    $message = "<div class='alert alert-danger'>Hiba történt a mentés során.</div>";
+                }
+
+                oci_free_statement($updateStmt);
+            }
         }
     }
     return [$message, $userData];
