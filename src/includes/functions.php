@@ -406,4 +406,60 @@ function getLeaderboardData($conn) {
     return $users;
 }
 
+function deleteAccount($conn, $email){
+    $stmt = oci_parse($conn, "DELETE FROM FELHASZNALO WHERE EMAIL = :email");
+    oci_bind_by_name($stmt, ":email", $email);
+
+    if (oci_execute($stmt)) {
+        oci_free_statement($stmt);
+        return true;
+    }
+    oci_free_statement($stmt);
+    return false;
+}
+
+function uploadVideo($conn, $email, $title, $description, $tags, $videoTmpPath) {
+    if (empty($title) || empty($description) || empty($videoTmpPath)) {
+        return "<div class='alert alert-danger'>Minden mező kitöltése kötelező!</div>";
+    }
+
+    $videoBlob = file_get_contents($videoTmpPath);
+
+    $sql = "INSERT INTO VIDEO (FELHASZNALO_EMAIL, CIM, LEIRAS, VIDEO_FILE)
+            VALUES (:email, :title, :description, EMPTY_BLOB())
+            RETURNING VIDEO_FILE, VIDEO_ID INTO :blob, :id";
+
+    $stmt = oci_parse($conn, $sql);
+    $lob = oci_new_descriptor($conn, OCI_D_LOB);
+    $videoId = null;
+
+    oci_bind_by_name($stmt, ":email", $email);
+    oci_bind_by_name($stmt, ":title", $title);
+    oci_bind_by_name($stmt, ":description", $description);
+    oci_bind_by_name($stmt, ":blob", $lob, -1, OCI_B_BLOB);
+    oci_bind_by_name($stmt, ":id", $videoId, -1, SQLT_INT);
+
+    $success = oci_execute($stmt, OCI_NO_AUTO_COMMIT);
+    if ($success && $lob->save($videoBlob)) {
+        oci_commit($conn);
+        $lob->free();
+        oci_free_statement($stmt);
+
+        $tagList = array_filter(array_map('trim', explode(',', $tags)));
+        foreach ($tagList as $tag) {
+            $stmtTag = oci_parse($conn, "INSERT INTO VIDEO_KATEGORIA (VIDEO_ID, KATEGORIA_NEV) VALUES (:id, :tag)");
+            oci_bind_by_name($stmtTag, ":id", $videoId);
+            oci_bind_by_name($stmtTag, ":tag", $tag);
+            oci_execute($stmtTag);
+            oci_free_statement($stmtTag);
+        }
+
+        return "<div class='alert alert-success mt-3'>Sikeres feltöltés!</div>";
+    } else {
+        oci_rollback($conn);
+        if ($lob) $lob->free();
+        if ($stmt) oci_free_statement($stmt);
+        return "<div class='alert alert-danger mt-3'>Hiba történt a mentéskor.</div>";
+    }
+}
 ?>

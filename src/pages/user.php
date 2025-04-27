@@ -9,6 +9,10 @@ require_once 'src/config/db.php';
 include 'src/includes/functions.php';
 $fromPage = 'user';
 $email = $_GET['email'] ?? null;
+if($email === $_SESSION['email']) {
+    header("Location: index.php?page=my_videos");
+    exit;
+}
 $videos = [];
 
 if ($email) {

@@ -12,18 +12,13 @@ $email = $_SESSION['email'];
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
-    // Felhasználó törlése
-    $stmt = oci_parse($conn, "DELETE FROM FELHASZNALO WHERE EMAIL = :email");
-    oci_bind_by_name($stmt, ":email", $email);
-
-    if (oci_execute($stmt)) {
-        oci_free_statement($stmt);
+    if (deleteAccount($conn,$email)) {
+        session_unset();
         session_destroy();
         header("Location: index.php?page=login&account_deleted=1");
         exit;
     } else {
         $message = "<div class='alert alert-danger'>Hiba történt a fiók törlése közben.</div>";
-        oci_free_statement($stmt);
     }
 }
 ?>
