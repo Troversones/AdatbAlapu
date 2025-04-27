@@ -67,6 +67,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: index.php?page=video&id=" . urlencode($videoId));
         exit;
     }
+
+    if (isset($_POST['playlist_id'])) {
+        $playlistId = intval($_POST['playlist_id']);
+        $message = addVideoToPlaylist($conn, $playlistId, $videoId);
+    }
+
 }
 
 $comments = getCommentsByVideo($conn, $videoId, $_SESSION['email']);
@@ -82,6 +88,9 @@ $playlists = ['Tananyagok', 'Frontend kedvencek', 'Később megnézendő'];
 ?>
 
 <div class="container py-5">
+    <?php if (isset($message) && !empty($message)): ?>
+        <?= $message ?>
+    <?php endif; ?>
     <?php if (!$video): ?>
         <div class="alert alert-danger">A megadott videó nem található.</div>
         <button onclick="location.href='<?= $backLink ?>'" class="btn btn-outline-secondary mb-4">← Vissza</button>
@@ -155,13 +164,14 @@ $playlists = ['Tananyagok', 'Frontend kedvencek', 'Később megnézendő'];
                         <?php endif; ?>
                     </div>
                 </div>
+
                 <form method="post" class="mb-4 mt-3 w-50">
                     <div class="row g-2 align-items-center">
                         <div class="col-sm-8 col-md-6">
-                            <select class="form-select" id="playlist_select" name="playlist_name" >
+                            <select class="form-select" name="playlist_id" >
                                 <option value="" disabled selected>Válassz listát...</option>
-                                <?php foreach ($playlists as $list): ?>
-                                    <option value="<?= htmlspecialchars($list) ?>"><?= htmlspecialchars($list) ?></option>
+                                <?php foreach (getUserPlaylists($conn, $_SESSION['email']) as $list): ?>
+                                    <option value="<?= htmlspecialchars($list['ID']) ?>"><?= htmlspecialchars($list['NAME']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>

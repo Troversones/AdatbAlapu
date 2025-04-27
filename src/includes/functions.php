@@ -186,6 +186,9 @@ function setReaction($conn, $videoId, $email, $type) {
         oci_bind_by_name($delete, ":email", $email);
         oci_execute($delete);
         oci_free_statement($delete);
+
+        removeVideoFromFavorites($conn, $email, $videoId);
+
     } else {
         if ($existingType) {
             $update = oci_parse($conn, "
@@ -198,6 +201,13 @@ function setReaction($conn, $videoId, $email, $type) {
             oci_bind_by_name($update, ":email", $email);
             oci_execute($update);
             oci_free_statement($update);
+
+            if ($type === 'dislike') {
+                removeVideoFromFavorites($conn, $email, $videoId);
+            } elseif ($type === 'like') {
+                addVideoToFavorites($conn, $email, $videoId);
+            }
+
         } else {
             if (in_array($type, ['like', 'dislike'])) {
                 $insert = oci_parse($conn, "
@@ -209,6 +219,10 @@ function setReaction($conn, $videoId, $email, $type) {
                 oci_bind_by_name($insert, ":type", $type);
                 oci_execute($insert);
                 oci_free_statement($insert);
+
+                if ($type === 'like') {
+                    addVideoToFavorites($conn, $email, $videoId);
+                }
             }
         }
     }
@@ -522,5 +536,261 @@ function uploadVideo($conn, $email, $title, $description, $tags, $videoTmpPath) 
         if ($stmt) oci_free_statement($stmt);
         return "<div class='alert alert-danger mt-3'>Hiba történt a mentéskor.</div>";
     }
+}
+
+function createPlaylist($conn, $name, $userEmail) {
+    $name = trim($name);
+
+    if (empty($name)) {
+        return "<div class='alert alert-danger'>Add meg a lejátszási lista nevét.</div>";
+    }
+
+    if (strcasecmp($name, 'Kedvencek') == 0) {
+        return "<div class='alert alert-danger'>Nem hozhatsz létre új 'Kedvencek' nevű lejátszási listát.</div>";
+    }
+
+    $sql = "INSERT INTO LEJATSZASI_LISTA (NEV, FELHASZNALO_EMAIL)
+            VALUES (:name, :email)";
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":name", $name);
+    oci_bind_by_name($stmt, ":email", $userEmail);
+
+    if (oci_execute($stmt)) {
+        oci_free_statement($stmt);
+        return "<div class='alert alert-success'>Sikeres létrehozás!</div>";
+    } else {
+        oci_free_statement($stmt);
+        return "<div class='alert alert-danger'>Hiba történt a létrehozás során.</div>";
+    }
+}
+
+function getUserPlaylists($conn, $userEmail) {
+    $playlists = [];
+
+    $sql = "
+        SELECT l.LEJATSZASI_LISTA_ID AS id, l.NEV AS name, 
+               COUNT(v.VIDEO_ID) AS count
+        FROM LEJATSZASI_LISTA l
+        LEFT JOIN LEJATSZASI_LISTA_VIDEO v ON l.LEJATSZASI_LISTA_ID = v.LEJATSZASI_LISTA_ID
+        WHERE l.FELHASZNALO_EMAIL = :email
+        GROUP BY l.LEJATSZASI_LISTA_ID, l.NEV
+        ORDER BY l.NEV
+    ";
+
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":email", $userEmail);
+    oci_execute($stmt);
+
+    while ($row = oci_fetch_assoc($stmt)) {
+        $playlists[] = $row;
+    }
+
+    oci_free_statement($stmt);
+
+    return $playlists;
+}
+
+function addVideoToPlaylist($conn, $playlistId, $videoId) {
+    $check = oci_parse($conn, "
+        SELECT COUNT(*) AS CNT 
+        FROM LEJATSZASI_LISTA_VIDEO 
+        WHERE LEJATSZASI_LISTA_ID = :playlistId AND VIDEO_ID = :videoId
+    ");
+    oci_bind_by_name($check, ":playlistId", $playlistId);
+    oci_bind_by_name($check, ":videoId", $videoId);
+    oci_execute($check);
+    $row = oci_fetch_assoc($check);
+    oci_free_statement($check);
+
+    if ($row['CNT'] > 0) {
+        return "<div class='alert alert-warning'>Ez a videó már szerepel ebben a lejátszási listában.</div>";
+    }
+
+    $insert = oci_parse($conn, "
+        INSERT INTO LEJATSZASI_LISTA_VIDEO (LEJATSZASI_LISTA_ID, VIDEO_ID)
+        VALUES (:playlistId, :videoId)
+    ");
+    oci_bind_by_name($insert, ":playlistId", $playlistId);
+    oci_bind_by_name($insert, ":videoId", $videoId);
+    oci_execute($insert);
+    oci_free_statement($insert);
+
+    return "<div class='alert alert-success'>Videó sikeresen hozzáadva a lejátszási listához!</div>";
+}
+
+function getPlaylistById($conn, $playlistId, $userEmail) {
+    $sql = "SELECT LEJATSZASI_LISTA_ID AS id, NEV AS name
+            FROM LEJATSZASI_LISTA
+            WHERE LEJATSZASI_LISTA_ID = :id AND FELHASZNALO_EMAIL = :email";
+
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":id", $playlistId);
+    oci_bind_by_name($stmt, ":email", $userEmail);
+    oci_execute($stmt);
+
+    $playlist = oci_fetch_assoc($stmt);
+    oci_free_statement($stmt);
+
+    return $playlist;
+}
+
+function updatePlaylistName($conn, $playlistId, $newName) {
+    $newName = trim($newName);
+
+    if (empty($newName)) {
+        return "<div class='alert alert-danger'>Add meg az új nevet.</div>";
+    }
+
+    if (strcasecmp($newName, 'Kedvencek') == 0) {
+        return "<div class='alert alert-danger'>Nem nevezheted át a listát 'Kedvencek'-re.</div>";
+    }
+
+    $stmt = oci_parse($conn, "SELECT NEV FROM LEJATSZASI_LISTA WHERE LEJATSZASI_LISTA_ID = :id");
+    oci_bind_by_name($stmt, ":id", $playlistId);
+    oci_execute($stmt);
+    $row = oci_fetch_assoc($stmt);
+    oci_free_statement($stmt);
+
+    if ($row && strcasecmp($row['NEV'], 'Kedvencek') == 0) {
+        return "<div class='alert alert-danger'>A 'Kedvencek' listát nem lehet átnevezni.</div>";
+    }
+
+    $stmt = oci_parse($conn, "UPDATE LEJATSZASI_LISTA SET NEV = :newName WHERE LEJATSZASI_LISTA_ID = :id");
+    oci_bind_by_name($stmt, ":newName", $newName);
+    oci_bind_by_name($stmt, ":id", $playlistId);
+
+    if (oci_execute($stmt)) {
+        oci_free_statement($stmt);
+        return "<div class='alert alert-success'>Lejátszási lista sikeresen átnevezve.</div>";
+    } else {
+        oci_free_statement($stmt);
+        return "<div class='alert alert-danger'>Hiba történt az átnevezés során.</div>";
+    }
+}
+
+function deletePlaylist($conn, $playlistId) {
+    $stmt = oci_parse($conn, "SELECT NEV FROM LEJATSZASI_LISTA WHERE LEJATSZASI_LISTA_ID = :id");
+    oci_bind_by_name($stmt, ":id", $playlistId);
+    oci_execute($stmt);
+    $row = oci_fetch_assoc($stmt);
+    oci_free_statement($stmt);
+
+    if ($row && strcasecmp($row['NEV'], 'Kedvencek') == 0) {
+        return "kedvencek_delete";
+    }
+
+    $stmt = oci_parse($conn, "DELETE FROM LEJATSZASI_LISTA WHERE LEJATSZASI_LISTA_ID = :id");
+    oci_bind_by_name($stmt, ":id", $playlistId);
+
+    if (oci_execute($stmt)) {
+        oci_free_statement($stmt);
+        return "success";
+    } else {
+        oci_free_statement($stmt);
+        return "other";
+    }
+}
+
+function removeVideoFromPlaylist($conn, $playlistId, $videoId) {
+    $sql = "DELETE FROM LEJATSZASI_LISTA_VIDEO 
+            WHERE LEJATSZASI_LISTA_ID = :playlistId AND VIDEO_ID = :videoId";
+
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":playlistId", $playlistId);
+    oci_bind_by_name($stmt, ":videoId", $videoId);
+
+    if (oci_execute($stmt)) {
+        oci_free_statement($stmt);
+        return "<div class='alert alert-success'>Videó eltávolítva a lejátszási listából.</div>";
+    } else {
+        oci_free_statement($stmt);
+        return "<div class='alert alert-danger'>Hiba a törlés során!</div>";
+    }
+}
+
+function getVideosInPlaylist($conn, $playlistId) {
+    $videos = [];
+
+    $sql = "SELECT v.VIDEO_ID AS id, v.CIM AS title
+            FROM LEJATSZASI_LISTA_VIDEO lv
+            JOIN VIDEO v ON lv.VIDEO_ID = v.VIDEO_ID
+            WHERE lv.LEJATSZASI_LISTA_ID = :id
+            ORDER BY v.DATUM DESC";
+
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":id", $playlistId);
+    oci_execute($stmt);
+
+    while ($row = oci_fetch_assoc($stmt)) {
+        $videos[] = $row;
+    }
+
+    oci_free_statement($stmt);
+
+    return $videos;
+}
+
+function addVideoToFavorites($conn, $email, $videoId) {
+    $stmt = oci_parse($conn, "
+        SELECT LEJATSZASI_LISTA_ID 
+        FROM LEJATSZASI_LISTA 
+        WHERE FELHASZNALO_EMAIL = :email AND NEV = 'Kedvencek'
+    ");
+    oci_bind_by_name($stmt, ":email", $email);
+    oci_execute($stmt);
+    $row = oci_fetch_assoc($stmt);
+    oci_free_statement($stmt);
+
+    if (!$row) return;
+
+    $playlistId = $row['LEJATSZASI_LISTA_ID'];
+
+    $check = oci_parse($conn, "
+        SELECT COUNT(*) AS CNT
+        FROM LEJATSZASI_LISTA_VIDEO
+        WHERE LEJATSZASI_LISTA_ID = :playlistId AND VIDEO_ID = :videoId
+    ");
+    oci_bind_by_name($check, ":playlistId", $playlistId);
+    oci_bind_by_name($check, ":videoId", $videoId);
+    oci_execute($check);
+    $checkRow = oci_fetch_assoc($check);
+    oci_free_statement($check);
+
+    if ($checkRow['CNT'] == 0) {
+        $insert = oci_parse($conn, "
+            INSERT INTO LEJATSZASI_LISTA_VIDEO (LEJATSZASI_LISTA_ID, VIDEO_ID)
+            VALUES (:playlistId, :videoId)
+        ");
+        oci_bind_by_name($insert, ":playlistId", $playlistId);
+        oci_bind_by_name($insert, ":videoId", $videoId);
+        oci_execute($insert);
+        oci_free_statement($insert);
+    }
+}
+
+
+function removeVideoFromFavorites($conn, $email, $videoId) {
+    $stmt = oci_parse($conn, "
+        SELECT LEJATSZASI_LISTA_ID 
+        FROM LEJATSZASI_LISTA 
+        WHERE FELHASZNALO_EMAIL = :email AND NEV = 'Kedvencek'
+    ");
+    oci_bind_by_name($stmt, ":email", $email);
+    oci_execute($stmt);
+    $row = oci_fetch_assoc($stmt);
+    oci_free_statement($stmt);
+
+    if (!$row) return;
+
+    $playlistId = $row['LEJATSZASI_LISTA_ID'];
+
+    $delete = oci_parse($conn, "
+        DELETE FROM LEJATSZASI_LISTA_VIDEO
+        WHERE LEJATSZASI_LISTA_ID = :playlistId AND VIDEO_ID = :videoId
+    ");
+    oci_bind_by_name($delete, ":playlistId", $playlistId);
+    oci_bind_by_name($delete, ":videoId", $videoId);
+    oci_execute($delete);
+    oci_free_statement($delete);
 }
 ?>
