@@ -38,6 +38,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $message = "<div class='alert alert-warning text-center'>Kérlek, tölts ki minden mezőt.</div>";
     }
 }
+ if (isset($_GET['account_deleted'])) {
+     $message = "  <div class='alert alert-success text-center'>Sikeresen törölted a fiókodat. </div> ";
+}
 ?>
 
 <div class="container-fluid min-vh-100 d-flex justify-content-center align-items-center bg-light">

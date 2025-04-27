@@ -10,19 +10,17 @@ include 'src/includes/functions.php';
 
 $videoId = $_GET['id'] ?? null;
 
-?>
-<div class="container py-5">
-<?php
+$message = null;
 
 if (!$videoId || !is_numeric($videoId)) {
-    echo "<div class='alert alert-danger'>Hiányzó vagy érvénytelen videó ID.</div>";
+    $message = "<div class='alert alert-danger'>Hiányzó vagy érvénytelen videó ID.</div>";
     exit;
 }
 
 $email = $_SESSION['email'];
 $video = getVideoDetailsForEdit($conn, $videoId, $email);
 if (!$video) {
-    echo "<div class='alert alert-danger'>Nincs jogosultság a videó szerkesztésére.</div>";
+    $message = "<div class='alert alert-danger'>Nincs jogosultság a videó szerkesztésére.</div>";
     exit;
 }
 
@@ -33,33 +31,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $tags = $_POST['tags'] ?? '';
 
         if (empty($title) || empty($description)) {
-            echo "<div class='alert alert-danger'>A cím és a leírás nem lehet üres!</div>";
+            $message = "<div class='alert alert-danger'>A cím és a leírás nem lehet üres!</div>";
         } else {
             updateVideo($conn, $videoId, $title, $description, $tags);
             $video = getVideoDetailsForEdit($conn, $videoId, $email);
-            echo "<div class='alert alert-success mt-3'>Sikeresen mentve!</div>";
+            $message = "<div class='alert alert-success mt-3'>Sikeresen mentve!</div>";
         }
     }
 
     if (isset($_POST['delete'])) {
         deleteVideo($conn, $videoId);
-        echo "<div class='alert alert-success mt-3'>Videó törölve.</div>";
+        echo "<div class='container py-5'> <div class='alert alert-success mt-3'>Videó törölve.</div> </div>";
         echo "<script>setTimeout(() => window.location.href = 'index.php?page=my_videos', 1500);</script>";
         exit;
     }
 }
 ?>
+<div class="container py-5">
+<?= $message ?>
 
     <a href="index.php?page=video&id=<?= urlencode($videoId) ?>" class="btn btn-outline-secondary mb-4">← Vissza</a>
     <form method="post">
         <div class="mb-3">
             <label for="title" class="form-label">Cím</label>
-            <input type="text" class="form-control" id="title" name="title" value="<?= htmlspecialchars($video['CIM']) ?>" maxlength="255" required>
+            <input type="text" class="form-control" id="title" name="title" value="<?= htmlspecialchars($video['CIM']) ?>" maxlength="255" >
         </div>
 
         <div class="mb-3">
             <label for="description" class="form-label">Leírás</label>
-            <textarea class="form-control" id="description" name="description" rows="4" maxlength="1000" required><?= htmlspecialchars($video['LEIRAS']) ?></textarea>
+            <textarea class="form-control" id="description" name="description" rows="4" maxlength="1000" ><?= htmlspecialchars($video['LEIRAS']) ?></textarea>
         </div>
 
         <div class="mb-3">

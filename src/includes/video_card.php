@@ -1,4 +1,11 @@
-<?php if (isset($video)): ?>
+
+
+<?php
+$_SESSION['video_back'] = [
+    'from' => $fromPage ?? 'home',
+    'email' => $email ?? null
+];
+if (isset($video)): ?>
 <a href="index.php?page=video&id=<?= $video['ID'] ?>" class="text-decoration-none text-dark">
     <div class="col">
         <div class="card h-100 shadow-sm border-0">
