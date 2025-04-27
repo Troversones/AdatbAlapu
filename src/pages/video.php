@@ -33,8 +33,8 @@ $video = $videoId ? getVideoById($conn, $videoId) : null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reaction'])) {
     $reaction = $_POST['reaction'];
-    if (in_array($reaction, ['like', 'dislike', 'remove'])) {
-        setReaction($conn, $videoId, $_SESSION['email'], $reaction === 'remove' ? null : $reaction);
+    if (in_array($reaction, ['like', 'dislike'])) {
+        setReaction($conn, $videoId, $_SESSION['email'], $reaction);
         header("Location: index.php?page=video&id=" . urlencode($videoId));
         exit;
     }
@@ -112,10 +112,10 @@ $playlists = ['Tananyagok', 'Frontend kedvencek', 'Később megnézendő'];
                         <span class="text-muted"><?= $video['views'] ?> megtekintés</span>
                     </div>
                     <form method="post" class="d-flex gap-2">
-                        <button type="submit" name="reaction" value="<?= $userReaction === 'like' ? 'remove' : 'like' ?>" class="btn btn-outline-success btn-sm <?= $userReaction === 'like' ? 'active' : '' ?>  <?= $_SESSION['email'] === $video['uploader'] ? 'disabled' : '' ?>">
+                        <button type="submit" name="reaction" value="like" class="btn btn-outline-success btn-sm <?= $userReaction === 'like' ? 'active' : '' ?>  <?= $_SESSION['email'] === $video['uploader'] ? 'disabled' : '' ?>">
                             <i class="bi bi-hand-thumbs-up-fill"></i> <?= $reactions['LIKES'] ?? 0 ?>
                         </button>
-                        <button type="submit" name="reaction" value="<?= $userReaction === 'dislike' ? 'remove' : 'dislike' ?>" class="btn btn-outline-danger btn-sm <?= $userReaction === 'dislike' ? 'active' : '' ?>  <?= $_SESSION['email'] === $video['uploader'] ? 'disabled' : '' ?>">
+                        <button type="submit" name="reaction" value="dislike" class="btn btn-outline-danger btn-sm <?= $userReaction === 'dislike' ? 'active' : '' ?>  <?= $_SESSION['email'] === $video['uploader'] ? 'disabled' : '' ?>">
                             <i class="bi bi-hand-thumbs-down-fill"></i> <?= $reactions['DISLIKES'] ?? 0 ?>
                         </button>
                     </form>

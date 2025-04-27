@@ -165,24 +165,52 @@ function getUserReaction($conn, $videoId, $email) {
 }
 
 function setReaction($conn, $videoId, $email, $type) {
-    $stmt = oci_parse($conn, "
-        DELETE FROM VIDEO_REAKCIO WHERE VIDEO_ID = :id AND FELHASZNALO_EMAIL = :email
+    $check = oci_parse($conn, "
+        SELECT TIPUS FROM VIDEO_REAKCIO
+        WHERE VIDEO_ID = :id AND FELHASZNALO_EMAIL = :email
     ");
-    oci_bind_by_name($stmt, ":id", $videoId);
-    oci_bind_by_name($stmt, ":email", $email);
-    oci_execute($stmt);
-    oci_free_statement($stmt);
+    oci_bind_by_name($check, ":id", $videoId);
+    oci_bind_by_name($check, ":email", $email);
+    oci_execute($check);
+    $existing = oci_fetch_assoc($check);
+    oci_free_statement($check);
 
-    if (in_array($type, ['like', 'dislike'])) {
-        $stmt = oci_parse($conn, "
-            INSERT INTO VIDEO_REAKCIO (VIDEO_ID, FELHASZNALO_EMAIL, TIPUS)
-            VALUES (:id, :email, :type)
+    $existingType = $existing['TIPUS'] ?? null;
+
+    if ($existingType === $type) {
+        $delete = oci_parse($conn, "
+            DELETE FROM VIDEO_REAKCIO
+            WHERE VIDEO_ID = :id AND FELHASZNALO_EMAIL = :email
         ");
-        oci_bind_by_name($stmt, ":id", $videoId);
-        oci_bind_by_name($stmt, ":email", $email);
-        oci_bind_by_name($stmt, ":type", $type);
-        oci_execute($stmt);
-        oci_free_statement($stmt);
+        oci_bind_by_name($delete, ":id", $videoId);
+        oci_bind_by_name($delete, ":email", $email);
+        oci_execute($delete);
+        oci_free_statement($delete);
+    } else {
+        if ($existingType) {
+            $update = oci_parse($conn, "
+                UPDATE VIDEO_REAKCIO
+                SET TIPUS = :type
+                WHERE VIDEO_ID = :id AND FELHASZNALO_EMAIL = :email
+            ");
+            oci_bind_by_name($update, ":type", $type);
+            oci_bind_by_name($update, ":id", $videoId);
+            oci_bind_by_name($update, ":email", $email);
+            oci_execute($update);
+            oci_free_statement($update);
+        } else {
+            if (in_array($type, ['like', 'dislike'])) {
+                $insert = oci_parse($conn, "
+                    INSERT INTO VIDEO_REAKCIO (VIDEO_ID, FELHASZNALO_EMAIL, TIPUS)
+                    VALUES (:id, :email, :type)
+                ");
+                oci_bind_by_name($insert, ":id", $videoId);
+                oci_bind_by_name($insert, ":email", $email);
+                oci_bind_by_name($insert, ":type", $type);
+                oci_execute($insert);
+                oci_free_statement($insert);
+            }
+        }
     }
 }
 
@@ -355,20 +383,53 @@ function deleteComment($conn, $commentId, $userEmail) {
     oci_free_statement($stmt);
 }
 
-function reactToComment($conn, $commentId, $userEmail, $type) {
-    $delete = oci_parse($conn, "DELETE FROM HOZZASZOLAS_REAKCIO WHERE HOZZASZOLAS_ID = :id AND FELHASZNALO_EMAIL = :email");
-    oci_bind_by_name($delete, ":id", $commentId);
-    oci_bind_by_name($delete, ":email", $userEmail);
-    oci_execute($delete);
-    oci_free_statement($delete);
+function reactToComment($conn, $commentId, $userEmail, $newType) {
+    $check = oci_parse($conn, "
+        SELECT TIPUS FROM HOZZASZOLAS_REAKCIO 
+        WHERE HOZZASZOLAS_ID = :id AND FELHASZNALO_EMAIL = :email
+    ");
+    oci_bind_by_name($check, ":id", $commentId);
+    oci_bind_by_name($check, ":email", $userEmail);
+    oci_execute($check);
+    $existing = oci_fetch_assoc($check);
+    oci_free_statement($check);
 
-    if (in_array($type, ['like', 'dislike'])) {
-        $insert = oci_parse($conn, "INSERT INTO HOZZASZOLAS_REAKCIO (HOZZASZOLAS_ID, FELHASZNALO_EMAIL, TIPUS) VALUES (:id, :email, :type)");
-        oci_bind_by_name($insert, ":id", $commentId);
-        oci_bind_by_name($insert, ":email", $userEmail);
-        oci_bind_by_name($insert, ":type", $type);
-        oci_execute($insert);
-        oci_free_statement($insert);
+    $existingType = $existing['TIPUS'] ?? null;
+
+    if ($existingType === $newType) {
+        $delete = oci_parse($conn, "
+            DELETE FROM HOZZASZOLAS_REAKCIO 
+            WHERE HOZZASZOLAS_ID = :id AND FELHASZNALO_EMAIL = :email
+        ");
+        oci_bind_by_name($delete, ":id", $commentId);
+        oci_bind_by_name($delete, ":email", $userEmail);
+        oci_execute($delete);
+        oci_free_statement($delete);
+    } else {
+        if ($existingType) {
+            $update = oci_parse($conn, "
+                UPDATE HOZZASZOLAS_REAKCIO 
+                SET TIPUS = :type 
+                WHERE HOZZASZOLAS_ID = :id AND FELHASZNALO_EMAIL = :email
+            ");
+            oci_bind_by_name($update, ":type", $newType);
+            oci_bind_by_name($update, ":id", $commentId);
+            oci_bind_by_name($update, ":email", $userEmail);
+            oci_execute($update);
+            oci_free_statement($update);
+        } else {
+            if (in_array($newType, ['like', 'dislike'])) {
+                $insert = oci_parse($conn, "
+                    INSERT INTO HOZZASZOLAS_REAKCIO (HOZZASZOLAS_ID, FELHASZNALO_EMAIL, TIPUS)
+                    VALUES (:id, :email, :type)
+                ");
+                oci_bind_by_name($insert, ":id", $commentId);
+                oci_bind_by_name($insert, ":email", $userEmail);
+                oci_bind_by_name($insert, ":type", $newType);
+                oci_execute($insert);
+                oci_free_statement($insert);
+            }
+        }
     }
 }
 
