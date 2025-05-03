@@ -867,4 +867,42 @@ function getAvailableCategories($conn) {
     oci_free_statement($stmt);
     return $categories;
 }
+
+function getPopularityStats($conn, $email) {
+    $videos = [];
+
+    $sql = "
+        SELECT
+            v.VIDEO_ID,
+            v.CIM,
+            v.NEZETTSEG +
+            NVL(vr.REAKCIOK_SZAMA, 0) +
+            NVL(h.HOZZASZOLASOK_SZAMA, 0) AS FELKAPOTTSAG
+        FROM VIDEO v
+        LEFT JOIN (
+            SELECT VIDEO_ID, COUNT(*) AS REAKCIOK_SZAMA
+            FROM VIDEO_REAKCIO
+            GROUP BY VIDEO_ID
+        ) vr ON v.VIDEO_ID = vr.VIDEO_ID
+        LEFT JOIN (
+            SELECT VIDEO_ID, COUNT(*) AS HOZZASZOLASOK_SZAMA
+            FROM HOZZASZOLAS
+            GROUP BY VIDEO_ID
+        ) h ON v.VIDEO_ID = h.VIDEO_ID
+        WHERE v.FELHASZNALO_EMAIL = :email
+        ORDER BY FELKAPOTTSAG DESC
+    ";
+
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":email", $email);
+    oci_execute($stmt);
+
+    while ($row = oci_fetch_assoc($stmt)) {
+        $videos[] = $row;
+    }
+
+    oci_free_statement($stmt);
+    return $videos;
+}
+
 ?>
