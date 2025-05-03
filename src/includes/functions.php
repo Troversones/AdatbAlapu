@@ -263,7 +263,8 @@ function getSubscriptions($conn, $email) {
     $sql = "SELECT f.FELIRATKOZOTT_EMAIL, u.FELHASZNALONEV 
             FROM FELIRATKOZAS f 
             JOIN FELHASZNALO u ON f.FELIRATKOZOTT_EMAIL = u.EMAIL 
-            WHERE f.FELHASZNALO_EMAIL = :email";
+            WHERE f.FELHASZNALO_EMAIL = :email
+            GROUP BY f.FELIRATKOZOTT_EMAIL, u.FELHASZNALONEV";
     $stmt = oci_parse($conn, $sql);
     oci_bind_by_name($stmt, ":email", $email);
     oci_execute($stmt);
