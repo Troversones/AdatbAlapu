@@ -187,8 +187,6 @@ function setReaction($conn, $videoId, $email, $type) {
         oci_execute($delete);
         oci_free_statement($delete);
 
-        removeVideoFromFavorites($conn, $email, $videoId);
-
     } else {
         if ($existingType) {
             $update = oci_parse($conn, "
@@ -202,12 +200,6 @@ function setReaction($conn, $videoId, $email, $type) {
             oci_execute($update);
             oci_free_statement($update);
 
-            if ($type === 'dislike') {
-                removeVideoFromFavorites($conn, $email, $videoId);
-            } elseif ($type === 'like') {
-                addVideoToFavorites($conn, $email, $videoId);
-            }
-
         } else {
             if (in_array($type, ['like', 'dislike'])) {
                 $insert = oci_parse($conn, "
@@ -219,10 +211,6 @@ function setReaction($conn, $videoId, $email, $type) {
                 oci_bind_by_name($insert, ":type", $type);
                 oci_execute($insert);
                 oci_free_statement($insert);
-
-                if ($type === 'like') {
-                    addVideoToFavorites($conn, $email, $videoId);
-                }
             }
         }
     }
