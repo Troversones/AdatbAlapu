@@ -804,4 +804,67 @@ function removeVideoFromFavorites($conn, $email, $videoId) {
     oci_execute($delete);
     oci_free_statement($delete);
 }
+
+function searchVideos($conn, $category = '', $sort = 'latest') {
+    $videos = [];
+
+    $sql = "
+        SELECT v.VIDEO_ID AS id, v.CIM AS title
+        FROM VIDEO v
+        LEFT JOIN VIDEO_KATEGORIA vk ON v.VIDEO_ID = vk.VIDEO_ID
+    ";
+
+    $conditions = [];
+    if (!empty($category)) {
+        $conditions[] = "LOWER(vk.KATEGORIA_NEV) = LOWER(:category)";
+    }
+
+    if (!empty($conditions)) {
+        $sql .= " WHERE " . implode(" AND ", $conditions);
+    }
+
+    $sql .= " GROUP BY v.VIDEO_ID, v.CIM, v.DATUM, v.NEZETTSEG ";
+
+    switch ($sort) {
+        case 'oldest':
+            $sql .= " ORDER BY v.DATUM ASC";
+            break;
+        case 'most_viewed':
+            $sql .= " ORDER BY v.NEZETTSEG DESC";
+            break;
+        case 'least_viewed':
+            $sql .= " ORDER BY v.NEZETTSEG ASC";
+            break;
+        default:
+            $sql .= " ORDER BY v.DATUM DESC";
+    }
+
+    $stmt = oci_parse($conn, $sql);
+
+    if (!empty($category)) {
+        oci_bind_by_name($stmt, ":category", $category);
+    }
+
+    oci_execute($stmt);
+
+    while ($row = oci_fetch_assoc($stmt)) {
+        $videos[] = $row;
+    }
+
+    oci_free_statement($stmt);
+
+    return $videos;
+}
+
+function getAvailableCategories($conn) {
+    $categories = [];
+    $sql = "SELECT DISTINCT LOWER(KATEGORIA_NEV) AS tag FROM VIDEO_KATEGORIA ORDER BY tag";
+    $stmt = oci_parse($conn, $sql);
+    oci_execute($stmt);
+    while ($row = oci_fetch_assoc($stmt)) {
+        $categories[] = $row['TAG'];
+    }
+    oci_free_statement($stmt);
+    return $categories;
+}
 ?>
