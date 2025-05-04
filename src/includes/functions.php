@@ -905,4 +905,88 @@ function getPopularityStats($conn, $email) {
     return $videos;
 }
 
+function registerUser($conn, $username, $email, $birthdate, $password) {
+    $message = '';
+
+    $felhasznalonev = htmlspecialchars(trim($username ?? ''), ENT_QUOTES, 'UTF-8');
+    $email = filter_var(trim($email ?? ''), FILTER_SANITIZE_EMAIL);
+    $szuletesi_datum = trim($birthdate ?? '');
+    $jelszo = trim($password ?? '');
+
+    if ($felhasznalonev && $email && $jelszo && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $szuletesi_datum)) {
+            $message = "<div class='alert alert-warning'>Hibás születési dátum formátum. (Pl.: 2000-12-31)</div>";
+        } else {
+            $hashedPassword = password_hash($jelszo, PASSWORD_DEFAULT);
+
+            $sql = "INSERT INTO FELHASZNALO (EMAIL, FELHASZNALONEV, JELSZO, SZULETESI_DATUM)
+                    VALUES (:email, :felhasznalonev, :jelszo, TO_DATE(:szuletesi_datum, 'YYYY-MM-DD'))";
+
+            $stmt = oci_parse($conn, $sql);
+            oci_bind_by_name($stmt, ":email", $email);
+            oci_bind_by_name($stmt, ":felhasznalonev", $felhasznalonev);
+            oci_bind_by_name($stmt, ":jelszo", $hashedPassword);
+            oci_bind_by_name($stmt, ":szuletesi_datum", $szuletesi_datum);
+
+            $result = oci_execute($stmt);
+
+            if ($result) {
+                $message = '<div class="alert alert-success d-flex justify-content-between align-items-center">
+                            <span>Sikeres regisztráció!</span>
+                            <a href="index.php?page=login" class="btn btn-sm btn-outline-dark">Bejelentkezés</a>
+                            </div>';
+            } else {
+                $e = oci_error($stmt);
+                if (strpos($e['message'], 'ORA-00001') !== false) {
+                    $message = "<div class='alert alert-warning'>Ez az email cím már regisztrálva van.</div>";
+                } else {
+                    $message = "<div class='alert alert-danger'>Hiba történt: " . htmlspecialchars($e['message']) . "</div>";
+                }
+            }
+
+            oci_free_statement($stmt);
+        }
+    } else {
+        $message = "<div class='alert alert-warning'>Érvénytelen vagy hiányzó adatok! Kérlek, tölts ki minden kötelező mezőt helyesen.</div>";
+    }
+
+    return $message;
+}
+
+function loginUser($conn, $emailInput, $passwordInput) {
+    $message = '';
+
+    $email = filter_var(trim($emailInput ?? ''), FILTER_SANITIZE_EMAIL);
+    $password = trim($passwordInput ?? '');
+
+    if (!empty($email) && !empty($password)) {
+        $sql = "SELECT JELSZO, FELHASZNALONEV FROM FELHASZNALO WHERE EMAIL = :email";
+        $stmt = oci_parse($conn, $sql);
+        oci_bind_by_name($stmt, ":email", $email);
+        oci_execute($stmt);
+
+        if ($row = oci_fetch_assoc($stmt)) {
+            $hashedPassword = $row['JELSZO'];
+
+            if (password_verify($password, $hashedPassword)) {
+                $_SESSION['email'] = $email;
+                $_SESSION['username'] = $row['FELHASZNALONEV'];
+
+                header("Location: index.php?page=home");
+                exit;
+            } else {
+                $message = "<div class='alert alert-danger text-center'>Hibás jelszó.</div>";
+            }
+        } else {
+            $message = "<div class='alert alert-danger text-center'>Ez az email nincs regisztrálva.</div>";
+        }
+
+        oci_free_statement($stmt);
+    } else {
+        $message = "<div class='alert alert-warning text-center'>Kérlek, tölts ki minden mezőt.</div>";
+    }
+
+    return $message;
+}
 ?>
