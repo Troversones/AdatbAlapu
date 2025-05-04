@@ -726,6 +726,7 @@ function getVideosInPlaylist($conn, $playlistId) {
             FROM LEJATSZASI_LISTA_VIDEO lv
             JOIN VIDEO v ON lv.VIDEO_ID = v.VIDEO_ID
             WHERE lv.LEJATSZASI_LISTA_ID = :id
+            GROUP BY v.VIDEO_ID, v.CIM, v.DATUM
             ORDER BY v.DATUM DESC";
 
     $stmt = oci_parse($conn, $sql);
