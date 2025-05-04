@@ -45,7 +45,7 @@ foreach ($data as $row) {
     </form>
 
     <div class="container py-5">
-        <h2 class="text-center mb-4">Saját videóid felkapottsági mutatója</h2>
+        <h2 class="mb-4">Saját videóid felkapottsági mutatója</h2>
         <canvas id="popularityChart" height="100"></canvas>
     </div>
 
@@ -77,4 +77,5 @@ foreach ($data as $row) {
                 }
             }
         }
-    });</script>
+    });
+</script>
