@@ -7,6 +7,16 @@ if (!isset($_SESSION['email'])) {
 }
 include 'src/includes/functions.php';
 list($message, $userData) = handleProfileUpdate($conn);
+
+
+$data = getPopularityStats($conn, $_SESSION['email']);
+$labels = [];
+$values = [];
+
+foreach ($data as $row) {
+    $labels[] = $row['CIM'];
+    $values[] = $row['FELKAPOTTSAG'];
+}
 ?>
 
 <div class="container mt-5 mb-5">
@@ -33,4 +43,39 @@ list($message, $userData) = handleProfileUpdate($conn);
             <a href="index.php?page=delete_account" class="btn btn-danger">Fiók törlése</a>
         </div>
     </form>
+
+    <div class="container py-5">
+        <h2 class="mb-4">Saját videóid felkapottsági mutatója</h2>
+        <canvas id="popularityChart" height="100"></canvas>
+    </div>
+
 </div>
+
+<script>
+    const ctx = document.getElementById('popularityChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: <?= json_encode($labels) ?>,
+            datasets: [{
+                label: 'Felkapottsági pontszám',
+                data: <?= json_encode($values) ?>,
+                backgroundColor: 'rgba(13,110,253,0.7)',
+                borderColor: 'rgba(13,110,253,1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Pontszám' }
+                },
+                x: {
+                    ticks: { autoSkip: false }
+                }
+            }
+        }
+    });
+</script>

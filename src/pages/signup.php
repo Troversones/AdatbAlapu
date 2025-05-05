@@ -5,50 +5,16 @@ if (isset($_SESSION['email'])) {
     exit;
 }
 require_once __DIR__ . '/../config/db.php';
+include 'src/includes/functions.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $felhasznalonev = htmlspecialchars(trim($_POST['username'] ?? ''), ENT_QUOTES, 'UTF-8');
-    $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
-    $szuletesi_datum = trim($_POST['birthdate'] ?? '');
-    $jelszo = trim($_POST['password'] ?? '');
-
-    if ($felhasznalonev && $email && $jelszo && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $szuletesi_datum)) {
-            $message = "<div class='alert alert-warning'>Hibás születési dátum formátum. (Pl.: 2000-12-31)</div>";
-        } else {
-            $hashedPassword = password_hash($jelszo, PASSWORD_DEFAULT);
-
-            $sql = "INSERT INTO FELHASZNALO (EMAIL, FELHASZNALONEV, JELSZO, SZULETESI_DATUM)
-                    VALUES (:email, :felhasznalonev, :jelszo, TO_DATE(:szuletesi_datum, 'YYYY-MM-DD'))";
-
-            $stmt = oci_parse($conn, $sql);
-            oci_bind_by_name($stmt, ":email", $email);
-            oci_bind_by_name($stmt, ":felhasznalonev", $felhasznalonev);
-            oci_bind_by_name($stmt, ":jelszo", $hashedPassword);
-            oci_bind_by_name($stmt, ":szuletesi_datum", $szuletesi_datum);
-
-            $result = oci_execute($stmt);
-
-            if ($result) {
-                $message = '<div class="alert alert-success d-flex justify-content-between align-items-center">
-                            <span>Sikeres regisztráció!</span>
-                            <a href="index.php?page=login" class="btn btn-sm btn-outline-dark">Bejelentkezés</a>
-                            </div>';
-            } else {
-                $e = oci_error($stmt);
-                if (strpos($e['message'], 'ORA-00001') !== false) {
-                    $message = "<div class='alert alert-warning'>Ez az email cím már regisztrálva van.</div>";
-                } else {
-                    $message = "<div class='alert alert-danger'>Hiba történt: " . htmlspecialchars($e['message']) . "</div>";
-                }
-            }
-
-            oci_free_statement($stmt);
-        }
-    } else {
-        $message = "<div class='alert alert-warning'>Érvénytelen vagy hiányzó adatok! Kérlek, tölts ki minden kötelező mezőt helyesen.</div>";
-    }
+    $message = registerUser(
+        $conn,
+        $_POST['username'] ?? '',
+        $_POST['email'] ?? '',
+        $_POST['birthdate'] ?? '',
+        $_POST['password'] ?? ''
+    );
 }
 ?>
 
