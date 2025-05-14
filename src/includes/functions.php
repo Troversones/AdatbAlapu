@@ -990,4 +990,31 @@ function loginUser($conn, $emailInput, $passwordInput) {
 
     return $message;
 }
+
+
+function getVideoStats($conn, $videoId) {
+    $sql = "
+        SELECT
+            v.VIDEO_ID,
+            v.NEZETTSEG AS views,
+            COUNT(DISTINCT vr_like.FELHASZNALO_EMAIL) AS likes,
+            COUNT(DISTINCT vr_dislike.FELHASZNALO_EMAIL) AS dislikes,
+            COUNT(DISTINCT h.HOZZASZOLAS_ID) AS comments
+        FROM VIDEO v
+        LEFT JOIN VIDEO_REAKCIO vr_like ON v.VIDEO_ID = vr_like.VIDEO_ID AND vr_like.TIPUS = 'like'
+        LEFT JOIN VIDEO_REAKCIO vr_dislike ON v.VIDEO_ID = vr_dislike.VIDEO_ID AND vr_dislike.TIPUS = 'dislike'
+        LEFT JOIN HOZZASZOLAS h ON v.VIDEO_ID = h.VIDEO_ID
+        WHERE v.VIDEO_ID = :id
+        GROUP BY v.VIDEO_ID, v.NEZETTSEG
+    ";
+
+    $stmt = oci_parse($conn, $sql);
+    oci_bind_by_name($stmt, ":id", $videoId);
+    oci_execute($stmt);
+
+    $stats = oci_fetch_assoc($stmt);
+    oci_free_statement($stmt);
+
+    return $stats ?: ['VIEWS' => 0, 'LIKES' => 0, 'DISLIKES' => 0, 'COMMENTS' => 0];
+}
 ?>
